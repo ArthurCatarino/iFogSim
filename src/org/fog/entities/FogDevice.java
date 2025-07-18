@@ -675,6 +675,9 @@ public class FogDevice extends PowerDatacenter {
 
     protected void processTupleArrival(SimEvent ev) {
         Tuple tuple = (Tuple) ev.getData();
+        //Log.enable();
+        Log.printLine(CloudSim.clock() + "s: " + getName() + " processando tupla no dispositivo " + getHost().getDatacenter().getName());
+        //Log.disable();
 
         if (getName().equals("cloud")) {
             updateCloudTraffic();
@@ -1182,6 +1185,8 @@ public class FogDevice extends PowerDatacenter {
     public Queue<Pair<Tuple, Integer>> getClusterTupleQueue() {
         return clusterTupleQueue;
     }
+
+    
 
 
 }

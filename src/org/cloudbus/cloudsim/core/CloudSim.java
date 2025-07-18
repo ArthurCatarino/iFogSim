@@ -312,6 +312,7 @@ public class CloudSim {
 
 	/** The future event queue. */
 	protected static FutureQueue future;
+	protected static FutureQueue copyOFutureQueue;
 
 	/** The deferred event queue. */
 	protected static DeferredQueue deferred;
@@ -347,6 +348,7 @@ public class CloudSim {
 		entities = new ArrayList<SimEntity>();
 		entitiesByName = new LinkedHashMap<String, SimEntity>();
 		future = new FutureQueue();
+		copyOFutureQueue = new FutureQueue();
 		deferred = new DeferredQueue();
 		waitPredicates = new HashMap<Integer, Predicate>();
 		clock = 0;
@@ -523,6 +525,7 @@ public class CloudSim {
 				
 		// If there are more future events then deal with them
 		if (future.size() > 0) {
+			//copyOFutureQueue = future;
 			List<SimEvent> toRemove = new ArrayList<SimEvent>();
 			Iterator<SimEvent> fit = future.iterator();
 			queue_empty = false;
@@ -887,7 +890,7 @@ public class CloudSim {
 			}
 
 			// this block allows termination of simulation at a specific time
-			if (terminateAt > 0.0 && clock >= terminateAt) {
+			if (terminateAt > .0 && clock >= terminateAt) {
 				terminateSimulation();
 				clock = terminateAt;
 				break;

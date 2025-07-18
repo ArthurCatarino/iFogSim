@@ -1,5 +1,6 @@
 package org.fog.entities;
 
+import org.cloudbus.cloudsim.Log;
 import org.apache.commons.math3.util.Pair;
 import org.cloudbus.cloudsim.Storage;
 import org.cloudbus.cloudsim.Vm;
@@ -155,6 +156,7 @@ public class MicroserviceFogDevice extends FogDevice {
     protected void processTupleArrival(SimEvent ev) {
 
         Tuple tuple = (Tuple) ev.getData();
+        Log.printLine(CloudSim.clock() + "s: " + getName() + " processando tupla no dispositivo " + getHost().getDatacenter().getName());
 
         Logger.debug(getName(), "Received tuple " + tuple.getCloudletId() + "with tupleType = " + tuple.getTupleType() + "\t| Source : " +
                 CloudSim.getEntityName(ev.getSource()) + "|Dest : " + CloudSim.getEntityName(ev.getDestination()));

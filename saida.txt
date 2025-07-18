@@ -1,0 +1,18 @@
+=== FIM DA SIMULAÇÃO ===
+Tempo simulado: 0.0s
+Quantidade de sensores: 1
+Quantidade de atuadores: 1
+cloud consumiu 167607.436 joules.
+Fog0 consumiu 11520.0 joules.
+=== FIM DA SIMULAÇÃO ===
+Tempo simulado: 0.0s
+Quantidade de sensores: 1
+Quantidade de atuadores: 1
+cloud consumiu 167607.436 joules.
+Fog0 consumiu 11510.0 joules.
+=== FIM DA SIMULAÇÃO ===
+Tempo simulado: 0.0s
+Quantidade de sensores: 1
+Quantidade de atuadores: 1
+cloud consumiu 167607.436 joules.
+Fog0 consumiu 11520.0 joules.
