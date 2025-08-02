@@ -1,4 +1,4 @@
-package org.fog.test.perfeval.testes;
+package org.fog.test.perfeval.testes.exemplo1;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -56,20 +56,22 @@ public class CriaDispositivos {
     idByName.put("cloud", cloud.getId());
 
     createFog();
+    createFog();
+    createFog();
 
-    for(int i = 0;i<1;i++) {
+    for(int i = 0;i<2;i++) {
       createSensor(idByName.get("Fog0"));
     }
-    /*for(int i = 0;i<1;i++) {
+    for(int i = 0;i<7;i++) {
       createSensor(idByName.get("Fog1"));
     }
-    for(int i = 0;i<1;i++) {
+    for(int i = 0;i<5;i++) {
       createSensor(idByName.get("Fog2"));
-    }*/
+    }
 
     createActuactor(idByName.get("Fog0"));
-    //createActuactor(idByName.get("Fog1"));
-    //createActuactor(idByName.get("Fog2")); 
+    createActuactor(idByName.get("Fog1"));
+    createActuactor(idByName.get("Fog2")); 
 
     for (Sensor sensor : sensors) {
       CloudSim.addEntity(sensor);

@@ -56,7 +56,7 @@ public class DCNSFog {
 		try {
 			Log.disable();
 			int num_user = 1; // number of cloud users
-			Calendar calendar = Calendar.getInstance();
+			Calendar calendar = Calendar.getInstance();;
 			boolean trace_flag = false; // mean trace events
 
 			CloudSim.init(num_user, calendar, trace_flag);

@@ -1,4 +1,4 @@
-package org.fog.test.perfeval.testes;
+package org.fog.test.perfeval.testes.exemplo1;
 
 import org.fog.application.AppEdge;
 import org.fog.application.AppLoop;
@@ -22,6 +22,7 @@ public class Logica {
 
   public Application criaAplicacao() {
     Application app = Application.createApplication(appId, userId);
+    app.setUserId(userId);
 
     // 1. Define os módulos (como VMs lógicas) 
     defineModulos(app);
@@ -40,18 +41,22 @@ public class Logica {
   private void defineModulos(Application app) {
     app.addAppModule("AnalisaTemperatura", 10);   
     // MIPS = 10 - Milhoes de Instruções por segundo define a potencia do fog.  
+    app.addAppModule("AnalisaNuvem",10);
   }
 
   private void defineConexoes(Application app) {
-    app.addAppEdge("SensorDeTemperatura", "AnalisaTemperatura", 1000, 500,"AnalisaTemperatura", Tuple.UP, AppEdge.SENSOR); // Sensor envia dado pro fog.
+    app.addAppEdge("SensorDeTemperatura", "AnalisaTemperatura", 1000, 500,"SensorDeTemperatura", Tuple.UP, AppEdge.SENSOR); // Sensor envia dado pro fog.
 
-    app.addAppEdge("AnalisaTemperatura", "Alerta", 100, 50,"Alerta", Tuple.DOWN, AppEdge.MODULE); // Fog manda o alerta pro actuator
+    app.addAppEdge("AnalisaTemperatura", "AnalisaNuvem",1000,500,"AnalisaTemperaturaNuvem",Tuple.UP,AppEdge.MODULE);
+
+    app.addAppEdge("AnalisaTemperatura", "Alerta", 100, 50,"Alerta", Tuple.DOWN, AppEdge.ACTUATOR); // Fog manda o alerta pro actuator
   }
 
   private void mapeamentoDeTuplas(Application app) {
-    app.addTupleMapping("AnalisaTemperatura", "SensorDeTemperatura", "Alerta", new FractionalSelectivity(0.4)); 
+    app.addTupleMapping("AnalisaTemperatura", "SensorDeTemperatura", "Alerta", new FractionalSelectivity(1.0)); 
     // Aqui e definido o tipo de dado que sera enviado entre os modulos, alem de no FractionalSelectivity : definir a frequencia. 
     //Neste casso 40% das temperaturas coletadas enviarao um alerta.
+        app.addTupleMapping("AnalisaTemperatura", "SensorDeTemperatura", "AnalisaTemperaturaNuvem", new FractionalSelectivity(0.4)); 
 
   }
 
