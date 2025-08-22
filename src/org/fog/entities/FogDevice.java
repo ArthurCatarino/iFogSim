@@ -20,10 +20,15 @@ import org.fog.policy.AppModuleAllocationPolicy;
 import org.fog.scheduler.StreamOperatorScheduler;
 import org.fog.utils.*;
 import org.json.simple.JSONObject;
+import org.fog.test.perfeval.testes.exemplo2.LogsReport;
 
 import java.util.*;
 
 public class FogDevice extends PowerDatacenter {
+
+    Set<Integer> tuplasRecebidas = new HashSet<>();
+    Set<Integer> tuplasEnviadas = new HashSet<>();
+
     protected Queue<Tuple> northTupleQueue;
     protected Queue<Pair<Tuple, Integer>> southTupleQueue;
 
@@ -675,9 +680,8 @@ public class FogDevice extends PowerDatacenter {
 
     protected void processTupleArrival(SimEvent ev) {
         Tuple tuple = (Tuple) ev.getData();
-        //Log.enable();
-        Log.printLine(CloudSim.clock() + "s: " + getName() + " processando tupla no dispositivo " + getHost().getDatacenter().getName());
-        //Log.disable();
+        Log.print(CloudSim.clock() + "s: " + getName() + " processando tupla no dispositivo " + getHost().getDatacenter().getName());
+        LogsReport.fogsLogs(getName(),tuple.getActualTupleId());
 
         if (getName().equals("cloud")) {
             updateCloudTraffic();

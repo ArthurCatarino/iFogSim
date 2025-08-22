@@ -1,4 +1,4 @@
-package org.fog.test.perfeval.testes.exemplo1;
+package org.fog.test.perfeval.testes;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,88 +25,58 @@ import org.fog.utils.FogUtils;
 import org.fog.utils.distribution.DeterministicDistribution;
 
 public class CriaDispositivos {
-
-  private int fogCount;
-  private int sensorCount;
-  private int actuatorCount;
   private List<FogDevice> fogDevices;
   private List<Sensor> sensors;
   private List<Actuator> actuators;
   private Map<String, Integer> idByName;
-  private int userId;
+  private int brokerId;
   private String appId;
     
-  public CriaDispositivos(int userId,String appId) {
-    fogCount = 0;
-    sensorCount = 0;
-    actuatorCount = 0;
+  public CriaDispositivos(int brokerId,String appId) {
     fogDevices = new ArrayList<FogDevice>();
     sensors = new ArrayList<Sensor>();
     actuators = new ArrayList<Actuator>();
     idByName = new HashMap<>();
-    this.userId = userId;
+    this.brokerId = brokerId;
     this.appId = appId;
   }
 
-  public void createDevices() {
-    // 1. Cria o dispositivo Cloud
-    FogDevice cloud = createFogDevice("cloud", 10000, 4000, 10000, 10000, 0, 0.01, 107.339, 83.4333);
-    cloud.setParentId(-1); // sem pai
+  public void createCloud(String name, int mips, int ram, int upBw, int downBw, int level,double ratePerMips, double busyPower, double idlePower) {
+    FogDevice cloud = createFogDevice(name,mips,ram,upBw,downBw,level,ratePerMips,busyPower,idlePower); 
+    cloud.setParentId(-1); // a nuvem nao tem pai
     fogDevices.add(cloud);
-    idByName.put("cloud", cloud.getId());
-
-    createFog();
-    createFog();
-    createFog();
-
-    for(int i = 0;i<2;i++) {
-      createSensor(idByName.get("Fog0"));
-    }
-    for(int i = 0;i<7;i++) {
-      createSensor(idByName.get("Fog1"));
-    }
-    for(int i = 0;i<5;i++) {
-      createSensor(idByName.get("Fog2"));
-    }
-
-    createActuactor(idByName.get("Fog0"));
-    createActuactor(idByName.get("Fog1"));
-    createActuactor(idByName.get("Fog2")); 
-
-    for (Sensor sensor : sensors) {
-      CloudSim.addEntity(sensor);
-    }
-    for (Actuator actuator : actuators) {
-      CloudSim.addEntity(actuator);
-  }
+    idByName.put(name,cloud.getId());
   }
 
-  private void createSensor(int idFather) {
-    Sensor sensor = new Sensor("Sensor"+sensorCount, "SensorDeTemperatura", userId, appId,
-    new DeterministicDistribution(5)); // envia a cada 5s
-    sensor.setGatewayDeviceId(idFather); // Define o fog  como seu pai
-    sensor.setLatency(2.0);
+   public  void createFog(String name, int mips, int ram, int upBw, int downBw, int level,double ratePerMips, double busyPower, double idlePower,String pai,int latencia) {
+    FogDevice edge = createFogDevice(name,mips,ram,upBw,downBw,level,ratePerMips,busyPower,idlePower);
+    if(pai == null) { // O fog nao necessariamente e obrigado a ter um pai.
+      edge.setParentId(-1);
+    }
+    else{
+    edge.setParentId(idByName.get(pai)); // Seta o pai do fog
+    }
 
-    sensors.add(sensor);
-    sensorCount++;
-  }
-
-  private  void createFog() {
-    FogDevice edge = createFogDevice("Fog"+fogCount, 2000, 1000, 10000, 270, 1, 0.0, 10,5);
-    edge.setParentId(idByName.get("cloud")); // Tem a nuvem como pai
-    edge.setUplinkLatency(5); // latência até o Cloud
+    edge.setUplinkLatency(latencia); // latência até o pai
     fogDevices.add(edge);
-    idByName.put("Fog"+fogCount, edge.getId());
-    fogCount++;
+    idByName.put(name, edge.getId());
   }
 
-  private  void createActuactor(int idFather) {
-    // Cria Atuador de alerta
-    Actuator actuator = new Actuator("Actuactor" + actuatorCount, userId, appId, "Alerta");
-    actuator.setGatewayDeviceId(idFather); // Define o fog criado anteriormente como seu pai
-    actuator.setLatency(1.0);
+   public void createSensor(String name, String tupleType, int frequenciaDeEnvio, String idPai, double latencia) {
+    Sensor sensor = new Sensor(name, tupleType, brokerId, appId,
+    new DeterministicDistribution(frequenciaDeEnvio)); // Define a frequencia a qual o sensor enviara dados
+    sensor.setGatewayDeviceId(idByName.get(idPai)); // Define um fog como seu pai
+    sensor.setLatency(latencia);
+    sensors.add(sensor);
+    CloudSim.addEntity(sensor);
+  }
+
+  public void createActuactor(String name, String tupleType,String idPai, double latencia) {
+    Actuator actuator = new Actuator(name, brokerId, appId, tupleType);
+    actuator.setGatewayDeviceId(idByName.get(idPai)); 
+    actuator.setLatency(latencia);
     actuators.add(actuator);
-    actuatorCount++;
+    CloudSim.addEntity(actuator);
   }
 
   private FogDevice createFogDevice(String name, long mips, int ram, long upBw, long downBw,

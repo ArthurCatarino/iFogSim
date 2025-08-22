@@ -53,10 +53,10 @@ public class Logica {
   }
 
   private void mapeamentoDeTuplas(Application app) {
-    app.addTupleMapping("AnalisaTemperatura", "SensorDeTemperatura", "Alerta", new FractionalSelectivity(1.0)); 
+    app.addTupleMapping("AnalisaTemperatura", "SensorDeTemperatura", "Alerta", new FractionalSelectivity(0.4)); 
     // Aqui e definido o tipo de dado que sera enviado entre os modulos, alem de no FractionalSelectivity : definir a frequencia. 
     //Neste casso 40% das temperaturas coletadas enviarao um alerta.
-        app.addTupleMapping("AnalisaTemperatura", "SensorDeTemperatura", "AnalisaTemperaturaNuvem", new FractionalSelectivity(0.4)); 
+        app.addTupleMapping("AnalisaTemperatura", "SensorDeTemperatura", "AnalisaTemperaturaNuvem", new FractionalSelectivity(1.0)); 
 
   }
 

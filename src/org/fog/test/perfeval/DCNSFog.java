@@ -223,7 +223,7 @@ public class DCNSFog {
 	 * @param userId identifier of the user of the application
 	 * @return
 	 */
-	@SuppressWarnings({"serial" })
+	@SuppressWarnings({"serial"})
 	private static Application createApplication(String appId, int userId){
 		
 		Application application = Application.createApplication(appId, userId);

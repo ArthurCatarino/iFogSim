@@ -14,6 +14,7 @@ import org.fog.placement.ModulePlacementEdgewards;
 import org.fog.placement.ModulePlacementMapping;
 import org.fog.policy.AppModuleAllocationPolicy;
 import org.fog.scheduler.StreamOperatorScheduler;
+import org.fog.test.perfeval.testes.CriaDispositivos;
 import org.cloudbus.cloudsim.*;
 import org.cloudbus.cloudsim.core.CloudSim;
 import org.cloudbus.cloudsim.power.PowerHost;
@@ -48,7 +49,9 @@ public class Temperatura {
 
     // Cria os dispositivos fisicos da simulação
     CriaDispositivos dispositivos = new CriaDispositivos(broker.getId(), appId);
-    dispositivos.createDevices();
+    dispositivos.createCloud("cloud",10000,16384,100000,100000,0,0.05,100.0,40.0);
+    dispositivos.createFog("fogCity",2000,2048,10000,10000,1,0.02,10.0,3.0,"cloud",10);
+    dispositivos.createSensor("sensor","SensorDeTemperatura",300,"fogCity",2);
     setDevices(dispositivos);
 
     //Define a parte logica da simulação

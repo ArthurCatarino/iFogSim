@@ -9,6 +9,7 @@ import org.cloudbus.cloudsim.core.SimEvent;
 import org.fog.application.AppEdge;
 import org.fog.application.AppLoop;
 import org.fog.application.Application;
+import org.fog.test.perfeval.testes.exemplo2.LogsReport;
 import org.fog.utils.*;
 import org.fog.utils.distribution.Distribution;
 
@@ -74,6 +75,7 @@ public class Sensor extends SimEntity{
 		setTupleType(tupleType);
 		setSensorName(tupleType);
 		setUserId(userId);
+
 	}
 	
 	public void transmit(){
@@ -92,14 +94,13 @@ public class Sensor extends SimEntity{
 		
 		tuple.setDestModuleName(_edge.getDestination());
 		tuple.setSrcModuleName(getSensorName());
-		Logger.debug(getName(), "Sending tuple with tupleId = "+tuple.getCloudletId());
-
 		tuple.setDestinationDeviceId(getGatewayDeviceId());
 
 		int actualTupleId = updateTimings(getSensorName(), tuple.getDestModuleName());
 		tuple.setActualTupleId(actualTupleId);
 		
 		send(gatewayDeviceId, getLatency(), FogEvents.TUPLE_ARRIVAL,tuple);
+		LogsReport.sensorLogs(getName(),tuple.getActualTupleId());
 	}
 	
 	protected int updateTimings(String src, String dest){

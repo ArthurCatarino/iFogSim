@@ -6,6 +6,7 @@ import org.cloudbus.cloudsim.core.SimEntity;
 import org.cloudbus.cloudsim.core.SimEvent;
 import org.fog.application.AppLoop;
 import org.fog.application.Application;
+import org.fog.test.perfeval.testes.exemplo2.LogsReport;
 import org.fog.utils.FogEvents;
 import org.fog.utils.GeoLocation;
 import org.fog.utils.Logger;
@@ -54,7 +55,7 @@ public class Actuator extends SimEntity{
 
 	private void processTupleArrival(SimEvent ev) {
 		Tuple tuple = (Tuple)ev.getData();
-		Log.printLine(CloudSim.clock() + "s: " + getName() + " processando tupla no dispositivo " + getName());
+		LogsReport.actuatorLogs(getName(),tuple.getActualTupleId());
 		Logger.debug(getName(), "Received tuple "+tuple.getCloudletId()+"on "+tuple.getDestModuleName());
 		String srcModule = tuple.getSrcModuleName();
 		String destModule = tuple.getDestModuleName();
