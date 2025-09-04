@@ -681,7 +681,10 @@ public class FogDevice extends PowerDatacenter {
     protected void processTupleArrival(SimEvent ev) {
         Tuple tuple = (Tuple) ev.getData();
         Log.print(CloudSim.clock() + "s: " + getName() + " processando tupla no dispositivo " + getHost().getDatacenter().getName());
-        LogsReport.fogsLogs(getName(),tuple.getActualTupleId());
+        LogsReport.fogsLogs(getName(),tuple.getActualTupleId(),tuple);
+        // if(tuple.getSrcModuleName().equals("preProcessing")) {
+        //     System.out.println(tuple);
+        // } 
 
         if (getName().equals("cloud")) {
             updateCloudTraffic();

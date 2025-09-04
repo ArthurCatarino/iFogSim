@@ -70,9 +70,8 @@ public class LogicaMonitoramentoDeAr {
   }
 
   private void adicionaLoop(Application app) {
-    final AppLoop loop1 = new AppLoop(new ArrayList<String>(){{add("preProcessing");add("anomalyDetection");add("dataCompactor");add("reportSender");}});
-    final AppLoop loop2 = new AppLoop(new ArrayList<String>(){{add("preProcessing");add("anomalyDetection");}});
-
+    final AppLoop loop1 = new AppLoop(new ArrayList<String>(){{add("sendData");add("preProcessing");add("anomalyDetection");add("dataCompactor");add("reportSender");}});
+    final AppLoop loop2 = new AppLoop(new ArrayList<String>(){{add("sendData");add("preProcessing");add("anomalyDetection");}});
     List<AppLoop> loops = new ArrayList<AppLoop>(){{add(loop1);add(loop2);}};
     app.setLoops(loops);
   }

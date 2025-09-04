@@ -637,7 +637,7 @@ public class CloudletSchedulerSpaceShared extends CloudletScheduler {
 	 */
 	@Override
 	public double getTotalCurrentAllocatedMipsForCloudlet(ResCloudlet rcl, double time) {
-		// TODO Auto-generated method stub
+		// TODO Auto-generated method stub                 
 		return 0.0;
 	}
 

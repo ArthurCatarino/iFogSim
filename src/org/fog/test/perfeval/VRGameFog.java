@@ -30,6 +30,7 @@ import org.fog.placement.ModulePlacementEdgewards;
 import org.fog.placement.ModulePlacementMapping;
 import org.fog.policy.AppModuleAllocationPolicy;
 import org.fog.scheduler.StreamOperatorScheduler;
+import org.fog.test.perfeval.testes.exemplo2.LogsReport;
 import org.fog.utils.FogLinearPowerModel;
 import org.fog.utils.FogUtils;
 import org.fog.utils.TimeKeeper;
@@ -101,6 +102,13 @@ public class VRGameFog {
 							:(new ModulePlacementEdgewards(fogDevices, sensors, actuators, application, moduleMapping)));
 
 			TimeKeeper.getInstance().setSimulationStartTime(Calendar.getInstance().getTimeInMillis());
+			
+		for(FogDevice i : fogDevices) {
+      LogsReport.startFogReports(i.getName());
+    }
+    for(Actuator i : actuators) {
+      LogsReport.startActuatorReports(i.getName());
+    }
 
 			CloudSim.startSimulation();
 

@@ -100,7 +100,7 @@ public class Sensor extends SimEntity{
 		tuple.setActualTupleId(actualTupleId);
 		
 		send(gatewayDeviceId, getLatency(), FogEvents.TUPLE_ARRIVAL,tuple);
-		LogsReport.sensorLogs(getName(),tuple.getActualTupleId());
+		LogsReport.sensorLogs(getName(),tuple.getActualTupleId(),tuple);
 	}
 	
 	protected int updateTimings(String src, String dest){

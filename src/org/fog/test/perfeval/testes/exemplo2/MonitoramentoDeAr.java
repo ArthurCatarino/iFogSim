@@ -12,6 +12,7 @@ import org.cloudbus.cloudsim.*;
 import org.cloudbus.cloudsim.core.CloudSim;
 import org.fog.utils.*;
 
+
 import java.util.*;
 
 public class MonitoramentoDeAr {
@@ -25,7 +26,7 @@ public class MonitoramentoDeAr {
 
     try{
       System.out.println("Starting Air monitoring Service...");
-      Log.enable();
+      Log.disable();
       int num_user = 1; // number of cloud users
       Calendar calendar = Calendar.getInstance();
       boolean trace_flag = false; //Logs
