@@ -26,6 +26,7 @@ public class LogicaMonitoramentoDeAr {
 
     // 2. Define as conexões entre os módulos (AppEdges)
     defineConexoes(app);
+    
     // 3. Define as conversões de tupla entre módulos
     mapeamentoDeTuplas(app);
     

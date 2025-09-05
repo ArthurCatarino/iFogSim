@@ -73,7 +73,7 @@ public class LogsReport {
   private static void generalReport() {
     try {
       DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
-      String caminho = "C:/Users/arthu/OneDrive/Área de Trabalho/ReportIFog/report"+ agora.format(formatter)+".txt";
+      String caminho = "C:/Users/arthu/OneDrive/Área de Trabalho/ReportIFog/report.txt";//+ agora.format(formatter)+".txt";
       
       File file = new File(caminho);
       if (!file.exists()) {

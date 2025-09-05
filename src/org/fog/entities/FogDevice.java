@@ -680,26 +680,11 @@ public class FogDevice extends PowerDatacenter {
 
     protected void processTupleArrival(SimEvent ev) {
         Tuple tuple = (Tuple) ev.getData();
-        Log.print(CloudSim.clock() + "s: " + getName() + " processando tupla no dispositivo " + getHost().getDatacenter().getName());
         LogsReport.fogsLogs(getName(),tuple.getActualTupleId(),tuple);
-        // if(tuple.getSrcModuleName().equals("preProcessing")) {
-        //     System.out.println(tuple);
-        // } 
 
         if (getName().equals("cloud")) {
             updateCloudTraffic();
-        }
-		
-		/*if(getName().equals("d-0") && tuple.getTupleType().equals("_SENSOR")){
-			System.out.println(++numClients);
-		}*/
-        Logger.debug(getName(), "Received tuple " + tuple.getCloudletId() + "with tupleType = " + tuple.getTupleType() + "\t| Source : " +
-                CloudSim.getEntityName(ev.getSource()) + "|Dest : " + CloudSim.getEntityName(ev.getDestination()));
-		
-		/*if(CloudSim.getEntityName(ev.getSource()).equals("drone_0")||CloudSim.getEntityName(ev.getDestination()).equals("drone_0"))
-			System.out.println(CloudSim.clock()+" "+getName()+" Received tuple "+tuple.getCloudletId()+" with tupleType = "+tuple.getTupleType()+"\t| Source : "+
-		CloudSim.getEntityName(ev.getSource())+"|Dest : "+CloudSim.getEntityName(ev.getDestination()));*/
-
+        }	
         send(ev.getSource(), CloudSim.getMinTimeBetweenEvents(), FogEvents.TUPLE_ACK);
 
         if (FogUtils.appIdToGeoCoverageMap.containsKey(tuple.getAppId())) {
@@ -742,8 +727,6 @@ public class FogDevice extends PowerDatacenter {
                     return;
                 }
                 tuple.setVmId(vmId);
-                //Logger.error(getName(), "Executing tuple for operator " + moduleName);
-
                 updateTimingsOnReceipt(tuple);
 
                 executeTuple(ev, tuple.getDestModuleName());

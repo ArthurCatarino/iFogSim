@@ -17,6 +17,7 @@ import org.cloudbus.cloudsim.sdn.overbooking.PeProvisionerOverbooking;
 import org.fog.entities.Actuator;
 import org.fog.entities.FogDevice;
 import org.fog.entities.FogDeviceCharacteristics;
+import org.fog.entities.FogDeviceWithQueue;
 import org.fog.entities.Sensor;
 import org.fog.policy.AppModuleAllocationPolicy;
 import org.fog.scheduler.StreamOperatorScheduler;
@@ -108,7 +109,7 @@ public class CriaDispositivos {
 
     FogDevice device = null;
     try {
-        device = new FogDevice(name, characteristics,
+        device = new FogDeviceWithQueue(name, characteristics,
                 new AppModuleAllocationPolicy(hostList), new LinkedList<>(),
                 10, upBw, downBw, 0, ratePerMips);
     } catch (Exception e) {

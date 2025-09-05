@@ -66,7 +66,7 @@ public class MonitoramentoDeAr {
     for(int i=0;i<3;i++) {
       devicesGenerator.createFog(nameFogNeighbothood+i,20,5,20,10,2,1,2,1,"fogCity",5);
       for(int j=0;j<2;j++) {
-        devicesGenerator.createSensor(nameFogNeighbothood + i + nameSensor+j,"sendData",100,nameFogNeighbothood+i,2);
+        devicesGenerator.createSensor(nameFogNeighbothood + i + nameSensor+j,"sendData",5,nameFogNeighbothood+i,2);
       }
     }
     devicesGenerator.createActuactor("alert", "alert","fogCity",5);
