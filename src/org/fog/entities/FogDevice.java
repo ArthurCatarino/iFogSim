@@ -42,7 +42,6 @@ public class FogDevice extends PowerDatacenter {
     protected Map<Integer, Integer> cloudTrafficMap;
 
     protected double lockTime;
-
     /**
      * ID of the parent Fog Device
      */

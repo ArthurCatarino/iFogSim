@@ -18,6 +18,7 @@ public class LogsReport {
   private static HashMap<String,Set<Integer>> actuators = new HashMap<>();
   private static HashMap<Integer,ArrayList<String>> tupleMap = new HashMap<>();
   private static HashMap<String,ArrayList<Integer>> sensorMap = new HashMap<>();
+  private static HashMap<String,Integer> lossPacketTrack = new HashMap<>(); 
   private static ArrayList<Integer> anomalies = new ArrayList<>();
   private static int lostPacket = 0;
   private static int actuatorCount = 0;
@@ -109,13 +110,20 @@ public class LogsReport {
       float porcetagemTotal = (actuatorCount*100)/(float)sensorCount;
       writer.write(Math.round(porcetagemTotal * 100) / 100f + "% das tuplas apresentaram anomalias" + "\n");
 
-      float porcentagemPerda = ((lostPacket*100)/(float)sensorCount);
-      writer.write(lostPacket + " pacotes perdidos (" + Math.round(porcentagemPerda) + "%)" + "\n");
-
       writer.write("Tuplas com anomalias: ");
       for(Integer k : anomalies) {
         writer.write(k+ " ");
       }
+      writer.write(System.lineSeparator());
+      writer.write("=======================================Perda de pacotes======================================="+ System.lineSeparator());
+      float porcentagemPerda = ((lostPacket*100)/(float)sensorCount);
+      writer.write(lostPacket + " pacotes perdidos (" + Math.round(porcentagemPerda) + "%)" + "\n");
+      float porcentagemPerdaModulo;
+      for(String s : lossPacketTrack.keySet()){
+        porcentagemPerdaModulo = ((lossPacketTrack.get(s)*100)/lostPacket);
+        writer.write(s + ": " + lossPacketTrack.get(s) + " (" + porcentagemPerdaModulo + "%)" + "\n" );
+      }
+
       writer.close();
     } catch (IOException e) {
       System.out.println("Ocorreu um erro ao criar o arquivo.");
@@ -177,6 +185,7 @@ public class LogsReport {
 
   public static void lossPacketReport(Tuple tuple) {
     lostPacket++;
+    lossPacketTrack.merge(tuple.getDestModuleName(),1,Integer::sum);
   }
 
 }

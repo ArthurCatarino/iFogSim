@@ -61,7 +61,7 @@ public class LogicaMonitoramentoDeAr {
   private void mapeamentoDeTuplas(Application app) {
     app.addTupleMapping("preProcessing","sendData","processedData", new FractionalSelectivity(1.0));
     
-    app.addTupleMapping("anomalyDetection","processedData","alert",new FractionalSelectivity(0.15));
+    app.addTupleMapping("anomalyDetection","processedData","alert",new FractionalSelectivity(0.1));
 
     app.addTupleMapping("anomalyDetection","processedData","chekedData",new FractionalSelectivity(1.0));
 

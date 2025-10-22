@@ -42,15 +42,15 @@ public class CriaDispositivos {
     this.appId = appId;
   }
 
-  public void createCloud(String name, int mips, int ram, int upBw, int downBw, int level,double ratePerMips, double busyPower, double idlePower) {
-    FogDevice cloud = createFogDevice(name,mips,ram,upBw,downBw,level,ratePerMips,busyPower,idlePower); 
+  public void createCloud(String name, int mips, int ram, int upBw, int downBw, int level,double ratePerMips, double busyPower, double idlePower,int queueSize) {
+    FogDevice cloud = createFogDevice(name,mips,ram,upBw,downBw,level,ratePerMips,busyPower,idlePower,queueSize); 
     cloud.setParentId(-1); // a nuvem nao tem pai
     fogDevices.add(cloud);
     idByName.put(name,cloud.getId());
   }
 
-   public  void createFog(String name, int mips, int ram, int upBw, int downBw, int level,double ratePerMips, double busyPower, double idlePower,String pai,int latencia) {
-    FogDevice edge = createFogDevice(name,mips,ram,upBw,downBw,level,ratePerMips,busyPower,idlePower);
+   public  void createFog(String name, int mips, int ram, int upBw, int downBw, int level,double ratePerMips, double busyPower, double idlePower,String pai,int latencia,int queueSize) {
+    FogDevice edge = createFogDevice(name,mips,ram,upBw,downBw,level,ratePerMips,busyPower,idlePower,queueSize);
     if(pai == null) { // O fog nao necessariamente e obrigado a ter um pai.
       edge.setParentId(-1);
     }
@@ -81,7 +81,7 @@ public class CriaDispositivos {
   }
 
   private FogDevice createFogDevice(String name, long mips, int ram, long upBw, long downBw,
-                          int level, double ratePerMips, double busyPower, double idlePower) {
+                          int level, double ratePerMips, double busyPower, double idlePower,int queueSize) {
     List<Pe> peList = new ArrayList<>();
     peList.add(new Pe(0, new PeProvisionerOverbooking(mips))); // CPU
 
@@ -111,7 +111,7 @@ public class CriaDispositivos {
     try {
         device = new FogDeviceWithQueue(name, characteristics,
                 new AppModuleAllocationPolicy(hostList), new LinkedList<>(),
-                10, upBw, downBw, 0, ratePerMips);
+                10, upBw, downBw, 0, ratePerMips,queueSize);
     } catch (Exception e) {
         e.printStackTrace();
     }

@@ -26,7 +26,7 @@ public class MonitoramentoDeAr {
 
     try{
       System.out.println("Starting Air monitoring Service...");
-      Log.disable();
+      Log.enable();
       int num_user = 1; // number of cloud users
       Calendar calendar = Calendar.getInstance();
       boolean trace_flag = false; //Logs
@@ -56,17 +56,17 @@ public class MonitoramentoDeAr {
   private static void createDevices(int brokerId) {
     CriaDispositivos devicesGenerator = new CriaDispositivos(brokerId, appId);
 
-    devicesGenerator.createCloud("cloud",100,20,100,100,0,1,10,5);
+    devicesGenerator.createCloud("cloud",100,20,100,100,0,1,10,5,50);
 
-    devicesGenerator.createFog("fogCity",50,10,50,50,1,1,5,2.5,"cloud",10);
+    devicesGenerator.createFog("fogCity",50,10,50,50,1,1,5,2.5,"cloud",10,5);
 
     String nameFogNeighbothood = "fogNeighborhood";
     String nameSensor = "sensor";
 
     for(int i=0;i<3;i++) {
-      devicesGenerator.createFog(nameFogNeighbothood+i,20,5,20,10,2,1,2,1,"fogCity",5);
+      devicesGenerator.createFog(nameFogNeighbothood+i,20,5,20,10,2,1,2,1,"fogCity",5,3);
       for(int j=0;j<2;j++) {
-        devicesGenerator.createSensor(nameFogNeighbothood + i + nameSensor+j,"sendData",5,nameFogNeighbothood+i,2);
+        devicesGenerator.createSensor(nameFogNeighbothood + i + nameSensor+j,"sendData",500,nameFogNeighbothood+i,5);
       }
     }
     devicesGenerator.createActuactor("alert", "alert","fogCity",5);
