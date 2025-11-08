@@ -26,7 +26,7 @@ public class MonitoramentoDeAr {
 
     try{
       System.out.println("Starting Air monitoring Service...");
-      Log.enable();
+      Log.disable();
       int num_user = 1; // number of cloud users
       Calendar calendar = Calendar.getInstance();
       boolean trace_flag = false; //Logs
@@ -58,25 +58,25 @@ public class MonitoramentoDeAr {
 
     devicesGenerator.createCloud("cloud",100,20,100,100,0,1,10,5,50);
 
-    devicesGenerator.createFog("fogCity",50,10,50,50,1,1,5,2.5,"cloud",10,5);
+    devicesGenerator.createFog("anomalyDetector",50,10,50,50,1,1,5,2.5,"cloud",10,1);
 
-    String nameFogNeighbothood = "fogNeighborhood";
+    String nameFogNeighborhood = "pre-processFog";
     String nameSensor = "sensor";
 
     for(int i=0;i<3;i++) {
-      devicesGenerator.createFog(nameFogNeighbothood+i,20,5,20,10,2,1,2,1,"fogCity",5,3);
+      devicesGenerator.createFog(nameFogNeighborhood+i,20,5,20,10,2,1,2,1,"anomalyDetector",5,1);
       for(int j=0;j<2;j++) {
-        devicesGenerator.createSensor(nameFogNeighbothood + i + nameSensor+j,"sendData",500,nameFogNeighbothood+i,5);
+        devicesGenerator.createSensor(nameFogNeighborhood + i + nameSensor + j, "sendData", 500, nameFogNeighborhood + i, 5);
       }
     }
-    devicesGenerator.createActuactor("alert", "alert","fogCity",5);
+    devicesGenerator.createActuactor("alert", "alert","anomalyDetector",5);
 
     fogDevices = devicesGenerator.getFogDevices();
     sensors = devicesGenerator.getSensors();
     actuators = devicesGenerator.getActuators();
 
     for(FogDevice i : fogDevices) {
-      LogsReport.startFogReports(i.getName());
+      LogsReport.startFogReports(i.getName(),i.getLevel());
     }
 
     for(Actuator i : actuators) {
@@ -91,13 +91,11 @@ public class MonitoramentoDeAr {
     mapping.addModuleToDevice("cloudAnalyzer", "cloud");
 
     for(FogDevice fog : fogDevices) {
-      if(fog.getName().startsWith("fogNeighborhood")) {
+      if(fog.getName().startsWith("pre-processFog")) {
         mapping.addModuleToDevice("preProcessing",fog.getName());
       }
-      if(fog.getName().startsWith("fogCity")) {
+      if(fog.getName().startsWith("anomalyDetector")) {
          mapping.addModuleToDevice("anomalyDetection",fog.getName());
-         mapping.addModuleToDevice("dataCompactor",fog.getName());
-         mapping.addModuleToDevice("reportSender",fog.getName());
       }
     }
     return mapping;

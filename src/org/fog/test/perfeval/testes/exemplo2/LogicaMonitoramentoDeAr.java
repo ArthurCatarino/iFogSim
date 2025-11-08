@@ -37,25 +37,19 @@ public class LogicaMonitoramentoDeAr {
 }
 
   private void defineModulos(Application app) {
-    app.addAppModule("preProcessing", 2); // Postes pre-processando os dados
-    app.addAppModule("anomalyDetection", 1); // Fog municipais detectando anomalias
-    app.addAppModule("dataCompactor", 2); // Fog municipal compactando os dados
-    app.addAppModule("reportSender", 1); // Fogs municipais enviando dados compactados pra nuvem
+    app.addAppModule("preProcessing", 1); // Postes pre-processando os dados
+    app.addAppModule("anomalyDetection", 2); // Fog municipais detectando anomalias
     app.addAppModule("cloudAnalyzer",3); // Analise de ML na nuvem. 
   }
 
   private void defineConexoes(Application app) {
-    app.addAppEdge("sendData","preProcessing",3,3,"sendData",Tuple.UP,AppEdge.SENSOR); //Sensores mandando dados pro fogs dos bairros.
+    app.addAppEdge("sendData","preProcessing",1,1,"sendData",Tuple.UP,AppEdge.SENSOR); //Sensores mandando dados pro fogs dos bairros.
 
     app.addAppEdge("preProcessing","anomalyDetection",2,2,"processedData",Tuple.UP,AppEdge.MODULE); //Fogs dos bairros mandando informações processadas para os fogs regionais
 
-    app.addAppEdge("anomalyDetection","dataCompactor",2,2,"chekedData",Tuple.UP,AppEdge.MODULE); //Dentro do fog municipal o modulo de detecção de anomalias chama o compactador de dados.
-
-    app.addAppEdge("dataCompactor","reportSender",1,1,"compactedData",Tuple.UP,AppEdge.MODULE); //Nos fogs municipais o dado compactado e enviado para o modulo de reports
+    app.addAppEdge("anomalyDetection","cloudAnalyzer",3,3,"chekedData",Tuple.UP,AppEdge.MODULE); //Dentro do fog municipal o modulo de detecção de anomalias chama o compactador de dados.
 
     app.addAppEdge("anomalyDetection","alert",1,1,"alert",Tuple.DOWN,AppEdge.ACTUATOR); // Nos fogs municipais caso exista alguma anomalia um alerta e enviado para os atuadores
-
-    app.addAppEdge("reportSender","cloudAnalyzer",1,1,"reportData",Tuple.UP,AppEdge.MODULE); //O fog municipal enviando os dados para a nuvem.
   }
 
   private void mapeamentoDeTuplas(Application app) {
@@ -64,14 +58,10 @@ public class LogicaMonitoramentoDeAr {
     app.addTupleMapping("anomalyDetection","processedData","alert",new FractionalSelectivity(0.1));
 
     app.addTupleMapping("anomalyDetection","processedData","chekedData",new FractionalSelectivity(1.0));
-
-    app.addTupleMapping("dataCompactor","chekedData","compactedData",new FractionalSelectivity(1.0));
-    
-    app.addTupleMapping("reportSender", "compactedData", "reportData", new FractionalSelectivity(1.0));
   }
 
   private void adicionaLoop(Application app) {
-    final AppLoop loop1 = new AppLoop(new ArrayList<String>(){{add("sendData");add("preProcessing");add("anomalyDetection");add("dataCompactor");add("reportSender");}});
+    final AppLoop loop1 = new AppLoop(new ArrayList<String>(){{add("sendData");add("preProcessing");add("anomalyDetection");add("cloudAnalyzer");}});
     final AppLoop loop2 = new AppLoop(new ArrayList<String>(){{add("sendData");add("preProcessing");add("anomalyDetection");}});
     List<AppLoop> loops = new ArrayList<AppLoop>(){{add(loop1);add(loop2);}};
     app.setLoops(loops);

@@ -59,9 +59,11 @@ public class FogDeviceWithQueue extends FogDevice {
       if(tuple.getDirection() == Tuple.ACTUATOR) {
         tupleQueue.add(ev);
         processTupleArrival();
-        return;
       }
-      LogsReport.lossPacketReport(tuple);
+      else {
+      LogsReport.lossPacketReport(getLevel(),tuple.getActualTupleId());
+      }
+      return;
     }
     boolean wasEmpty = tupleQueue.isEmpty();
     tupleQueue.add(ev);
@@ -112,7 +114,7 @@ public class FogDeviceWithQueue extends FogDevice {
     
     SimEvent ev = tupleQueue.peek();
     Tuple tuple = (Tuple) ev.getData();
-    LogsReport.fogsLogs(getName(),tuple.getActualTupleId(),tuple);
+    LogsReport.fogsLogs(getName(),tuple.getActualTupleId(),tuple,getLevel());
 
     if (getName().equals("cloud")) {
       updateCloudTraffic();

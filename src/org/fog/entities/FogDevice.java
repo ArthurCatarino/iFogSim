@@ -679,7 +679,7 @@ public class FogDevice extends PowerDatacenter {
 
     protected void processTupleArrival(SimEvent ev) {
         Tuple tuple = (Tuple) ev.getData();
-        LogsReport.fogsLogs(getName(),tuple.getActualTupleId(),tuple);
+        LogsReport.fogsLogs(getName(),tuple.getActualTupleId(),tuple,getLevel());
 
         if (getName().equals("cloud")) {
             updateCloudTraffic();

@@ -8,17 +8,21 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import org.fog.entities.Tuple;
 
 public class LogsReport {
   private static HashMap<String,Integer> sensors = new HashMap<>();
   private static HashMap<String,Set<Integer>> fogs = new HashMap<>();
+  private static HashMap<String,Integer> levelFogs = new HashMap<>();
+  private static HashMap<Integer,Set<Integer>> tupleLevelCounter = new HashMap<>();
   private static HashMap<String,Set<Integer>> actuators = new HashMap<>();
   private static HashMap<Integer,ArrayList<String>> tupleMap = new HashMap<>();
   private static HashMap<String,ArrayList<Integer>> sensorMap = new HashMap<>();
-  private static HashMap<String,Integer> lossPacketTrack = new HashMap<>(); 
+  private static HashMap<Integer,Set<Integer>> lossPacketTrack = new HashMap<>(); 
   private static ArrayList<Integer> anomalies = new ArrayList<>();
   private static int lostPacket = 0;
   private static int actuatorCount = 0;
@@ -26,9 +30,14 @@ public class LogsReport {
   private static int tuplasFogs = 0;
   private static LocalDateTime agora = LocalDateTime.now(); 
 
-  public static void startFogReports(String device) {
+  public static void startFogReports(String device,int level) {
     Set<Integer>tuplasFog = new HashSet<>();
     fogs.put(device,tuplasFog);
+    Set<Integer> tuplasLevel = new HashSet<>();
+    tupleLevelCounter.put(level,tuplasLevel);
+    Set<Integer> lossPacket = new HashSet<>();
+    lossPacketTrack.put(level,lossPacket);
+
   }
   
   public static void startActuatorReports(String device) {
@@ -50,13 +59,16 @@ public class LogsReport {
     generalReport();
   } 
 
-  public static void fogsLogs(String device,Integer id, Tuple tuple) {
+  public static void fogsLogs(String device,Integer id, Tuple tuple,int level) {
     tupleMapping(tuple,tuple.getDestModuleName());
     if(id > 1) {
       if(fogs.get(device).add(id)) {
         tuplasFogs++;
+        levelFogs.put(device,level);
+        tupleLevelCounter.get(level).add(id);
         generalReport();
       }
+      
     }
   }
   
@@ -71,8 +83,17 @@ public class LogsReport {
     }
   }
 
+  private static Set<Integer> defineLevels(){
+    Set<Integer> levels = new TreeSet<>();
+    for(String i : levelFogs.keySet()){
+      levels.add(levelFogs.get(i));
+    }
+    return levels;
+  }
+
   private static void generalReport() {
     try {
+      Set<Integer> levels = defineLevels();
       DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
       String caminho = "C:/Users/arthu/OneDrive/Área de Trabalho/ReportIFog/report.txt";//+ agora.format(formatter)+".txt";
       
@@ -90,13 +111,28 @@ public class LogsReport {
       }
       writer.write(sensorCount + " tuplas enviadas" + System.lineSeparator());
 
-      writer.write("=======================================Fogs======================================="+ System.lineSeparator());
-      if(tuplasFogs != 0) {
-        for(String i : fogs.keySet()){
-          porcentagem = (fogs.get(i).size()*100)/tuplasFogs;
-          writer.write("O device: " + i + " processou: " + fogs.get(i).size() + " tuplas ("+Math.round(porcentagem * 100) / 100f+"%)" + System.lineSeparator());
-        }
-        writer.write(tuplasFogs + " tuplas processadas"+System.lineSeparator());
+      for(int n : levels){
+
+        writer.write("=======================================Fogs Level " + n +"======================================="+ System.lineSeparator());
+        if(tuplasFogs != 0) {
+          float quantidadeDeTuplas;
+          if(tupleLevelCounter.get(n+1) == null) {
+            quantidadeDeTuplas = sensorCount;
+          }
+          else {
+          quantidadeDeTuplas = tupleLevelCounter.get(n+1).size();
+          }
+          for(String i : fogs.keySet()){
+            if(levelFogs.get(i) != null  && levelFogs.get(i) == n) {
+              porcentagem = (fogs.get(i).size()*100)/Math.max(quantidadeDeTuplas-lossPacketTrack.get(n).size(),lossPacketTrack.get(n).size()-quantidadeDeTuplas) ;
+              writer.write("O device: " + i + " processou: " + fogs.get(i).size() + " tuplas ("+Math.round(porcentagem * 100) / 100f+"%)" + System.lineSeparator());
+            }
+          }
+          float porcentagemPerda = ((lossPacketTrack.get(n).size()*100)/(float)quantidadeDeTuplas);
+          writer.write(quantidadeDeTuplas + " tuplas recebidas"+System.lineSeparator());
+          writer.write(quantidadeDeTuplas - lossPacketTrack.get(n).size() + " tuplas processadas " + System.lineSeparator());
+          writer.write("Tuplas perdidas: " + lossPacketTrack.get(n).size() + "(" + Math.round(porcentagemPerda) + "%)" +  System.lineSeparator());
+      }
       }
        writer.write("=======================================Actuators======================================="+ System.lineSeparator());
       if(actuatorCount !=0) {
@@ -116,13 +152,9 @@ public class LogsReport {
       }
       writer.write(System.lineSeparator());
       writer.write("=======================================Perda de pacotes======================================="+ System.lineSeparator());
-      float porcentagemPerda = ((lostPacket*100)/(float)sensorCount);
-      writer.write(lostPacket + " pacotes perdidos (" + Math.round(porcentagemPerda) + "%)" + "\n");
+ 
       float porcentagemPerdaModulo;
-      for(String s : lossPacketTrack.keySet()){
-        porcentagemPerdaModulo = ((lossPacketTrack.get(s)*100)/lostPacket);
-        writer.write(s + ": " + lossPacketTrack.get(s) + " (" + porcentagemPerdaModulo + "%)" + "\n" );
-      }
+
 
       writer.close();
     } catch (IOException e) {
@@ -183,9 +215,8 @@ public class LogsReport {
     }
   }
 
-  public static void lossPacketReport(Tuple tuple) {
-    lostPacket++;
-    lossPacketTrack.merge(tuple.getDestModuleName(),1,Integer::sum);
+  public static void lossPacketReport(Integer level, int id) {
+    lossPacketTrack.get(level).add(id);
   }
 
 }
