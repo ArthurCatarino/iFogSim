@@ -9,7 +9,7 @@ import org.cloudbus.cloudsim.core.SimEvent;
 import org.fog.application.AppEdge;
 import org.fog.application.AppLoop;
 import org.fog.application.Application;
-import org.fog.test.perfeval.testes.exemplo2.LogsReport;
+import org.fog.test.perfeval.testes.LogsReport;
 import org.fog.utils.*;
 import org.fog.utils.distribution.Distribution;
 

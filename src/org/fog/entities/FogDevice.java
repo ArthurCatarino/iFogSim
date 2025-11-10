@@ -18,9 +18,9 @@ import org.fog.application.Application;
 import org.fog.mobilitydata.Clustering;
 import org.fog.policy.AppModuleAllocationPolicy;
 import org.fog.scheduler.StreamOperatorScheduler;
+import org.fog.test.perfeval.testes.LogsReport;
 import org.fog.utils.*;
 import org.json.simple.JSONObject;
-import org.fog.test.perfeval.testes.exemplo2.LogsReport;
 
 import java.util.*;
 

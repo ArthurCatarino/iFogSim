@@ -43,7 +43,9 @@ public class LogicaMonitoramentoDeAr {
   }
 
   private void defineConexoes(Application app) {
-    app.addAppEdge("sendData","preProcessing",1,1,"sendData",Tuple.UP,AppEdge.SENSOR); //Sensores mandando dados pro fogs dos bairros.
+    app.addAppEdge("sendDataA","preProcessing",1,1,"sendDataA",Tuple.UP,AppEdge.SENSOR); //Sensores mandando dados pro fogs dos bairros.
+
+    app.addAppEdge("sendDataB","preProcessing",3,3,"sendDataB",Tuple.UP,AppEdge.SENSOR); //Sensores mandando dados pro fogs dos bairros.
 
     app.addAppEdge("preProcessing","anomalyDetection",2,2,"processedData",Tuple.UP,AppEdge.MODULE); //Fogs dos bairros mandando informações processadas para os fogs regionais
 
@@ -53,7 +55,9 @@ public class LogicaMonitoramentoDeAr {
   }
 
   private void mapeamentoDeTuplas(Application app) {
-    app.addTupleMapping("preProcessing","sendData","processedData", new FractionalSelectivity(1.0));
+    app.addTupleMapping("preProcessing","sendDataB","processedData", new FractionalSelectivity(1.0));
+
+    app.addTupleMapping("preProcessing","sendDataA","processedData", new FractionalSelectivity(1.0));
     
     app.addTupleMapping("anomalyDetection","processedData","alert",new FractionalSelectivity(0.1));
 
@@ -61,9 +65,11 @@ public class LogicaMonitoramentoDeAr {
   }
 
   private void adicionaLoop(Application app) {
-    final AppLoop loop1 = new AppLoop(new ArrayList<String>(){{add("sendData");add("preProcessing");add("anomalyDetection");add("cloudAnalyzer");}});
-    final AppLoop loop2 = new AppLoop(new ArrayList<String>(){{add("sendData");add("preProcessing");add("anomalyDetection");}});
-    List<AppLoop> loops = new ArrayList<AppLoop>(){{add(loop1);add(loop2);}};
+    final AppLoop loop1 = new AppLoop(new ArrayList<String>(){{add("sendDataA");add("preProcessing");add("anomalyDetection");add("cloudAnalyzer");}});
+    final AppLoop loop2 = new AppLoop(new ArrayList<String>(){{add("sendDataB");add("preProcessing");add("anomalyDetection");add("cloudAnalyzer");}});
+    final AppLoop loop3 = new AppLoop(new ArrayList<String>(){{add("sendDataA");add("preProcessing");add("anomalyDetection");}});
+    final AppLoop loop4 = new AppLoop(new ArrayList<String>(){{add("sendDataB");add("preProcessing");add("anomalyDetection");}});
+    List<AppLoop> loops = new ArrayList<AppLoop>(){{add(loop1);add(loop2);add(loop3);add(loop4);}};
     app.setLoops(loops);
   }
 }

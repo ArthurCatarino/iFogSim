@@ -8,6 +8,7 @@ import org.fog.placement.ModulePlacement;
 import org.fog.placement.ModulePlacementEdgewards;
 import org.fog.placement.ModulePlacementMapping;
 import org.fog.test.perfeval.testes.CriaDispositivos;
+import org.fog.test.perfeval.testes.LogsReport;
 import org.cloudbus.cloudsim.*;
 import org.cloudbus.cloudsim.core.CloudSim;
 import org.fog.utils.*;
@@ -42,7 +43,7 @@ public class MonitoramentoDeAr {
 
       Controller controller = new Controller("controller", fogDevices, sensors, actuators);
     
-      controller.submitApplication(app,new ModulePlacementEdgewards(fogDevices,sensors,actuators,app,mapping));
+      controller.submitApplication(app,new ModulePlacementMapping(fogDevices,app,mapping));
 
       TimeKeeper.getInstance().setSimulationStartTime(Calendar.getInstance().getTimeInMillis());
       CloudSim.startSimulation();
@@ -61,14 +62,32 @@ public class MonitoramentoDeAr {
     devicesGenerator.createFog("anomalyDetector",50,10,50,50,1,1,5,2.5,"cloud",10,1);
 
     String nameFogNeighborhood = "pre-processFog";
-    String nameSensor = "sensor";
+    String nameSensorA = "sensorA";
+    String nameSensorB = "sensorB";    
 
-    for(int i=0;i<3;i++) {
-      devicesGenerator.createFog(nameFogNeighborhood+i,20,5,20,10,2,1,2,1,"anomalyDetector",5,1);
-      for(int j=0;j<2;j++) {
-        devicesGenerator.createSensor(nameFogNeighborhood + i + nameSensor + j, "sendData", 500, nameFogNeighborhood + i, 5);
-      }
-    }
+    int frequenciaA = 1000;
+    int frequenciaB = 1000;
+
+    //Um no fog com 3 sensores ligados a ele sendo dois sensores A e um B
+    devicesGenerator.createFogWithAlgorithm(nameFogNeighborhood+"1",20,3,20,10,2,1,6,3,"anomalyDetector",5,10);
+    devicesGenerator.createSensor(nameFogNeighborhood + "1" + nameSensorA + "1","sendDataA", frequenciaA, nameFogNeighborhood+"1", 5);
+    devicesGenerator.createSensor(nameFogNeighborhood + "1" + nameSensorA + "2","sendDataA", frequenciaA, nameFogNeighborhood+"1", 5);
+    devicesGenerator.createSensor(nameFogNeighborhood + "1" + nameSensorB + "1","sendDataB", frequenciaB, nameFogNeighborhood+"1", 5);
+    
+    // UM no fog com 1 sensor do tipo B ligado a ele 
+    devicesGenerator.createFogWithAlgorithm(nameFogNeighborhood+"2",5,1,20,10,2,1,2,1,"anomalyDetector",5,5);
+    devicesGenerator.createSensor(nameFogNeighborhood + "2" + nameSensorB + "1","sendDataB", frequenciaB, nameFogNeighborhood+"2", 5);
+
+    //Um no fog com um sensor A e um B ligado a ele
+    devicesGenerator.createFogWithAlgorithm(nameFogNeighborhood+"3",10,2,20,10,2,1,4,2,"anomalyDetector",5,2);
+    devicesGenerator.createSensor(nameFogNeighborhood + "3" + nameSensorB + "1","sendDataB", frequenciaB, nameFogNeighborhood+"3", 5);
+    devicesGenerator.createSensor(nameFogNeighborhood + "3" + nameSensorA + "1","sendDataA", frequenciaA, nameFogNeighborhood+"3", 5);
+
+    // UM no fog com 1 sensor do tipo A ligado a ele 
+    devicesGenerator.createFogWithAlgorithm(nameFogNeighborhood+"4",5,1,20,10,2,1,2,1,"anomalyDetector",5,5);
+    devicesGenerator.createSensor(nameFogNeighborhood + "4" + nameSensorA + "1","sendDataA", frequenciaA, nameFogNeighborhood+"4", 5);
+
+
     devicesGenerator.createActuactor("alert", "alert","anomalyDetector",5);
 
     fogDevices = devicesGenerator.getFogDevices();

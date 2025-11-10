@@ -1,4 +1,4 @@
-package org.fog.test.perfeval.testes.exemplo2;
+package org.fog.test.perfeval.testes;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -115,6 +115,9 @@ public class LogsReport {
 
         writer.write("=======================================Fogs Level " + n +"======================================="+ System.lineSeparator());
         if(tuplasFogs != 0) {
+          if(n == 0) {
+            System.out.println("Nivel 0");
+          }
           float quantidadeDeTuplas;
           if(tupleLevelCounter.get(n+1) == null) {
             quantidadeDeTuplas = sensorCount;

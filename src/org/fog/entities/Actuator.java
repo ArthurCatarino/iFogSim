@@ -6,7 +6,7 @@ import org.cloudbus.cloudsim.core.SimEntity;
 import org.cloudbus.cloudsim.core.SimEvent;
 import org.fog.application.AppLoop;
 import org.fog.application.Application;
-import org.fog.test.perfeval.testes.exemplo2.LogsReport;
+import org.fog.test.perfeval.testes.LogsReport;
 import org.fog.utils.FogEvents;
 import org.fog.utils.GeoLocation;
 import org.fog.utils.Logger;

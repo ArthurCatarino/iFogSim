@@ -18,6 +18,7 @@ import org.fog.entities.Actuator;
 import org.fog.entities.FogDevice;
 import org.fog.entities.FogDeviceCharacteristics;
 import org.fog.entities.FogDeviceWithQueue;
+import org.fog.entities.FogDeviceWithQueueAndAlgorithm;
 import org.fog.entities.Sensor;
 import org.fog.policy.AppModuleAllocationPolicy;
 import org.fog.scheduler.StreamOperatorScheduler;
@@ -51,6 +52,20 @@ public class CriaDispositivos {
 
    public  void createFog(String name, int mips, int ram, int upBw, int downBw, int level,double ratePerMips, double busyPower, double idlePower,String pai,int latencia,int queueSize) {
     FogDevice edge = createFogDevice(name,mips,ram,upBw,downBw,level,ratePerMips,busyPower,idlePower,queueSize);
+    if(pai == null) { // O fog nao necessariamente e obrigado a ter um pai.
+      edge.setParentId(-1);
+    }
+    else{
+    edge.setParentId(idByName.get(pai)); // Seta o pai do fog
+    }
+
+    edge.setUplinkLatency(latencia); // latência até o pai
+    fogDevices.add(edge);
+    idByName.put(name, edge.getId());
+  }
+
+  public void createFogWithAlgorithm(String name, int mips, int ram, int upBw, int downBw, int level,double ratePerMips, double busyPower, double idlePower,String pai,int latencia,int queueSize) {
+    FogDevice edge = createFogDeviceWithAlgorithm(name,mips,ram,upBw,downBw,level,ratePerMips,busyPower,idlePower,queueSize);
     if(pai == null) { // O fog nao necessariamente e obrigado a ter um pai.
       edge.setParentId(-1);
     }
@@ -120,6 +135,46 @@ public class CriaDispositivos {
     return device;
 }
   
+  private FogDevice createFogDeviceWithAlgorithm(String name, long mips, int ram, long upBw, long downBw,
+                          int level, double ratePerMips, double busyPower, double idlePower,int queueSize) {
+    List<Pe> peList = new ArrayList<>();
+    peList.add(new Pe(0, new PeProvisionerOverbooking(mips))); // CPU
+
+    int hostId = FogUtils.generateEntityId();
+    long storage = 1000000; // 1 GB
+    int bw = 10000;         // largura de banda
+
+    PowerHost host = new PowerHost(
+        hostId,
+        new RamProvisionerSimple(ram),
+        new BwProvisionerOverbooking(bw),
+        storage,
+        peList,
+        new StreamOperatorScheduler(peList),
+        new FogLinearPowerModel(busyPower, idlePower)
+    );
+
+    List<Host> hostList = new ArrayList<>();
+    hostList.add(host);
+
+    FogDeviceCharacteristics characteristics = new FogDeviceCharacteristics(
+        "x86", "Linux", "Xen", host,
+        10.0, 3.0, 0.05, 0.001, 0.2
+    );
+
+    FogDevice device = null;
+    try {
+        device = new FogDeviceWithQueueAndAlgorithm(name, characteristics,
+                new AppModuleAllocationPolicy(hostList), new LinkedList<>(),
+                10, upBw, downBw, 0, ratePerMips,queueSize);
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+
+    device.setLevel(level);
+    return device;
+}
+
   public List<FogDevice> getFogDevices() {
     return Collections.unmodifiableList(fogDevices);
   }

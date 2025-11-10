@@ -30,7 +30,7 @@ import org.fog.placement.ModulePlacementEdgewards;
 import org.fog.placement.ModulePlacementMapping;
 import org.fog.policy.AppModuleAllocationPolicy;
 import org.fog.scheduler.StreamOperatorScheduler;
-import org.fog.test.perfeval.testes.exemplo2.LogsReport;
+import org.fog.test.perfeval.testes.LogsReport;
 import org.fog.utils.FogLinearPowerModel;
 import org.fog.utils.FogUtils;
 import org.fog.utils.TimeKeeper;

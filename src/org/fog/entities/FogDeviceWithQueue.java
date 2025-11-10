@@ -8,7 +8,7 @@ import java.util.Queue;
 
 import org.fog.application.AppModule;
 import org.fog.application.Application;
-import org.fog.test.perfeval.testes.exemplo2.LogsReport;
+import org.fog.test.perfeval.testes.LogsReport;
 import org.fog.utils.FogEvents;
 import org.fog.utils.TimeKeeper;
 import org.cloudbus.cloudsim.Cloudlet;
@@ -22,8 +22,8 @@ import org.cloudbus.cloudsim.core.SimEvent;
 import org.cloudbus.cloudsim.power.models.PowerModel;
 
 public class FogDeviceWithQueue extends FogDevice {
-  private int maxTupleQueueSize;
-  private Queue<SimEvent> tupleQueue;
+  protected int maxTupleQueueSize;
+  protected Queue<SimEvent> tupleQueue;
 
   public FogDeviceWithQueue(String name, long mips, int ram, double uplinkBandwidth, double downlinkBandwidth, double ratePerMips, PowerModel powerModel,int queueSize) throws Exception {
     super(name,mips,ram,uplinkBandwidth,downlinkBandwidth,ratePerMips,powerModel);
