@@ -21,7 +21,7 @@ public class MonitoramentoDeAr {
   private static List<Sensor> sensors = new ArrayList<Sensor>();
   private static List<Actuator> actuators = new ArrayList<Actuator>();
   private static String appId = "AirMonitoring";
-
+//zzz
 
   public static void main(String[] args) {
 
@@ -101,6 +101,25 @@ public class MonitoramentoDeAr {
     for(Actuator i : actuators) {
       LogsReport.startActuatorReports(i.getName());
     }
+    addNeighboor(brokerId);
+  }
+
+  private static void addNeighboor(int brokerId){
+    CriaDispositivos devicesGenerator = new CriaDispositivos(brokerId, appId);
+    String fogBairro = "pre-processFog";
+
+    devicesGenerator.addNeighboor(fogBairro+"1",fogBairro+"2");
+    devicesGenerator.addNeighboor(fogBairro+"1",fogBairro+"2");
+
+    devicesGenerator.addNeighboor(fogBairro+"2",fogBairro+"1");
+    devicesGenerator.addNeighboor(fogBairro+"2",fogBairro+"3");
+
+    devicesGenerator.addNeighboor(fogBairro+"3",fogBairro+"2");
+    devicesGenerator.addNeighboor(fogBairro+"3",fogBairro+"4");
+
+    devicesGenerator.addNeighboor(fogBairro+"4",fogBairro+"3");
+
+
   }
 
   private static ModuleMapping criaMapeamento() {
@@ -108,6 +127,8 @@ public class MonitoramentoDeAr {
     ModuleMapping mapping = ModuleMapping.createModuleMapping();
 
     mapping.addModuleToDevice("cloudAnalyzer", "cloud");
+    mapping.addModuleToDevice("pre-processFog", "cloud");
+    mapping.addModuleToDevice("anomalyDetector", "cloud");
 
     for(FogDevice fog : fogDevices) {
       if(fog.getName().startsWith("pre-processFog")) {

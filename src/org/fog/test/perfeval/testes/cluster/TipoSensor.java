@@ -1,0 +1,37 @@
+package org.fog.test.perfeval.testes.cluster;
+
+import java.util.Random;
+
+public enum TipoSensor {
+    
+    // Definição dos Tipos: (Nome, Frequencia(ms), Tamanho(bytes), CustoProcessamento(mips))
+    TIPO_A_RAPIDO("SENSOR_A", 15, 150, 60),     // Alta freq, Leve
+    TIPO_B_PESADO("SENSOR_B", 80, 1200, 600); // Baixa freq, Pesado
+
+    private String tupleType;
+    private int frequenciaMs;
+    private long tamanhoBytes;
+    private long mips; // Quanto de CPU gasta para processar
+
+    // Construtor do Enum
+    TipoSensor(String tupleType, int frequenciaMs, long tamanhoBytes, long mips) {
+        this.tupleType = tupleType;
+        this.frequenciaMs = frequenciaMs;
+        this.tamanhoBytes = tamanhoBytes;
+        this.mips = mips;
+    }
+
+    // Método Utilitário para sortear aleatoriamente
+    private static final Random RANDOM = new Random();
+    
+    public static TipoSensor sortear() {
+        TipoSensor[] sensores = values();
+        return sensores[RANDOM.nextInt(sensores.length)];
+    }
+
+    // Getters
+    public String getTupleType() { return tupleType; }
+    public int getFrequenciaMs() { return frequenciaMs; }
+    public long getTamanhoBytes() { return tamanhoBytes; }
+    public long getMips() { return mips; }
+}

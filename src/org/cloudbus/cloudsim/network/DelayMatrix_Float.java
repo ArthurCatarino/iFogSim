@@ -21,7 +21,7 @@ public class DelayMatrix_Float {
 	/**
 	 * matrix holding delay information between any two nodes
 	 */
-	protected float[][] mDelayMatrix = null;
+	public float[][] mDelayMatrix = null;
 
 	/**
 	 * number of nodes in the distance-aware-topology

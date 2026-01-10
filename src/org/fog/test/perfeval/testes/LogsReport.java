@@ -62,12 +62,14 @@ public class LogsReport {
   public static void fogsLogs(String device,Integer id, Tuple tuple,int level) {
     tupleMapping(tuple,tuple.getDestModuleName());
     if(id > 1) {
+      if(fogs.get(device) != null) {
       if(fogs.get(device).add(id)) {
         tuplasFogs++;
         levelFogs.put(device,level);
         tupleLevelCounter.get(level).add(id);
         generalReport();
       }
+    }
       
     }
   }

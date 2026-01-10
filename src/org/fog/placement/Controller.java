@@ -20,11 +20,12 @@ import org.fog.utils.FogEvents;
 import org.fog.utils.FogUtils;
 import org.fog.utils.NetworkUsageMonitor;
 import org.fog.utils.TimeKeeper;
+import org.fog.test.perfeval.testes.cluster.AnalisadorResultados;
 
 public class Controller extends SimEntity{
 	
 	public static boolean ONLY_CLOUD = false;
-		
+
 	private List<FogDevice> fogDevices;
 	private List<Sensor> sensors;
 	private List<Actuator> actuators;
@@ -103,6 +104,7 @@ public class Controller extends SimEntity{
 			printPowerDetails();
 			printCostDetails();
 			printNetworkUsageDetails();
+			AnalisadorResultados.salvarResultados(fogDevices,"Relatorio");
 			System.exit(0);
 			break;
 			

@@ -221,12 +221,15 @@ public class NetworkTopology {
 	public static double getDelay(int srcID, int destID) {
 		if (networkEnabled) {
 			try {
+				if((map.get(srcID) == null)||(map.get(destID) == null)) {
+					return 0;
+				}
 				// add the network latency
 				double delay = delayMatrix.getDelay(map.get(srcID), map.get(destID));
 
 				return delay;
 			} catch (Exception e) {
-				// in case of error, just keep running and return 0.0
+				return 0;
 			}
 		}
 		return 0.0;

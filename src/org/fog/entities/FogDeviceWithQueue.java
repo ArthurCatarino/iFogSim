@@ -9,6 +9,7 @@ import java.util.Queue;
 import org.fog.application.AppModule;
 import org.fog.application.Application;
 import org.fog.test.perfeval.testes.LogsReport;
+import org.fog.test.perfeval.testes.cluster.Monitoramento;
 import org.fog.utils.FogEvents;
 import org.fog.utils.TimeKeeper;
 import org.cloudbus.cloudsim.Cloudlet;
@@ -61,7 +62,7 @@ public class FogDeviceWithQueue extends FogDevice {
         processTupleArrival();
       }
       else {
-      LogsReport.lossPacketReport(getLevel(),tuple.getActualTupleId());
+      Monitoramento.addTuplaPerdida();
       }
       return;
     }

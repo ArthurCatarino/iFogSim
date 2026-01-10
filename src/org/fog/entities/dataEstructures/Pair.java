@@ -14,38 +14,38 @@ import java.util.Objects;
 public class Pair<K extends Comparable<K>, V extends Comparable<V>> 
     implements Comparable<Pair<K, V>> {
  
-  private K key;
-  private V value;
+  private K first;
+  private V second;
 
-  public Pair(K key, V value) {
-    this.key = key;
-    this.value = value;
+  public Pair(K first, V second) {
+    this.first = first;
+    this.second = second;
   }
 
-  public K getKey() {
-    return key;
+  public K getfirst() {
+    return first;
   }
 
-  public V getValue() {
-    return value;
+  public V getsecond() {
+    return second;
   }
 
-  public void setKey(K key) {
-    this.key = key;
+  public void setfirst(K first) {
+    this.first = first;
   }
 
-  public void setValue(V value) {
-    this.value = value;
+  public void setsecond(V second) {
+    this.second = second;
   }
 
   @Override
   public int compareTo(Pair<K, V> outro) {
-    int cmpValor = this.value.compareTo(outro.value);
+    int cmpValor = this.second.compareTo(outro.second);
     
     if (cmpValor != 0) {
       return cmpValor;
     }
-    return this.key.compareTo(outro.key);
+    return this.first.compareTo(outro.first);
   }
 
   @Override
@@ -55,17 +55,17 @@ public class Pair<K extends Comparable<K>, V extends Comparable<V>>
     
     Pair<?, ?> outro = (Pair<?, ?>) obj;
     
-    return Objects.equals(this.key, outro.key) &&
-           Objects.equals(this.value, outro.value);
+    return Objects.equals(this.first, outro.first) &&
+           Objects.equals(this.second, outro.second);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(key, value);
+    return Objects.hash(first, second);
   }
 
   @Override
   public String toString() {
-    return "Pair(key=" + key + ", value=" + value + ")";
+    return "Pair(first=" + first + ", second=" + second + ")";
   }
 }
