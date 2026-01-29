@@ -22,6 +22,7 @@ public class Tuple extends Cloudlet{
 	private int actuatorId;
 	private int sourceDeviceId;
 	private int sourceModuleId;
+	private Double lifetime;
 	/**
 	 * Map to keep track of which module instances has a tuple traversed.
 	 * 
@@ -50,6 +51,7 @@ public class Tuple extends Cloudlet{
 		setSourceDeviceId(-1);
 		setModuleCopyMap(new HashMap<String, Integer>());
 		setDestinationDeviceId(-1);
+		lifetime = 0.0;
 	}
 
 	public int getActualTupleId() {
@@ -158,6 +160,14 @@ public class Tuple extends Cloudlet{
 
 	public void setTraversedMicroservices(Map<String, Integer> traversed) {
 		traversedMicroservices = traversed;
+	}
+
+	public void addLifetime(Double time){
+		lifetime+= time;
+	}
+
+	public Double getLifeTime() {
+		return lifetime;
 	}
 
 }

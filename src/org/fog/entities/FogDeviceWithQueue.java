@@ -8,6 +8,7 @@ import java.util.Queue;
 
 import org.fog.application.AppModule;
 import org.fog.application.Application;
+import org.fog.entities.dataEstructures.NetworkMatrix;
 import org.fog.test.perfeval.testes.LogsReport;
 import org.fog.test.perfeval.testes.cluster.Monitoramento;
 import org.fog.utils.FogEvents;
@@ -54,22 +55,43 @@ public class FogDeviceWithQueue extends FogDevice {
     }
     }
 
+  private FogDeviceWithQueue calculaProximo(Tuple tuple){
+    return null;
+  }
+
   protected void updateQueue(SimEvent ev) {
-    if(tupleQueue.size() >= maxTupleQueueSize) {
-      Tuple tuple = (Tuple) ev.getData();      
-      if(tuple.getDirection() == Tuple.ACTUATOR) {
-        tupleQueue.add(ev);
-        processTupleArrival();
-      }
-      else {
+    Tuple tuple = (Tuple) ev.getData(); 
+    if(tuple.getLifeTime() > 22) { // Limite de tempo por tupla 25ms
       Monitoramento.addTuplaPerdida();
-      }
       return;
     }
-    boolean wasEmpty = tupleQueue.isEmpty();
-    tupleQueue.add(ev);
-    if(wasEmpty) {
-      processTupleArrival();
+    if(tupleQueue.size() >= maxTupleQueueSize && tuple.getDirection() != Tuple.ACTUATOR) {  
+      if(this.getLevel() <= 0){ // a nuvem nao tem pra quem redirecionar, ela e o ultimo recurso.
+        Monitoramento.addTuplaPerdida();
+        return;
+      }
+
+      FogDeviceWithQueue proximo = null;
+      proximo = calculaProximo(tuple);
+
+      if(proximo != null){
+        Double delayTotal = calculaDelay(proximo.getId(),tuple);
+        Monitoramento.addUsoRede(tuple.getCloudletFileSize());
+        Monitoramento.addTempoMedio(tuple.getActualTupleId(), delayTotal);
+        tuple.addLifetime(delayTotal);
+        send(proximo.getId(), delayTotal, FogEvents.TUPLE_ARRIVAL, tuple);
+      }
+      else{
+        sendUp(tuple);
+      }
+    
+    }
+    else{
+      boolean wasEmpty = tupleQueue.isEmpty();
+      tupleQueue.add(ev);
+      if(wasEmpty) {
+        processTupleArrival();
+      }
     }
   }
  @Override
@@ -187,5 +209,12 @@ public class FogDeviceWithQueue extends FogDevice {
         }
     }
 }
+
+  protected double calculaDelay(int proximo, Tuple tuple) {
+    Double latency = NetworkMatrix.getLatency(this.getId(),proximo);
+    Double banda = NetworkMatrix.getBand(this.getId(),proximo);
+    Double tempoTransmissao = tuple.getCloudletFileSize() / banda;
+    return latency + tempoTransmissao;
+  }
 
 }

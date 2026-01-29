@@ -6,18 +6,17 @@ import java.util.List;
 import org.fog.utils.FogEvents;
 import org.cloudbus.cloudsim.Storage;
 import org.cloudbus.cloudsim.VmAllocationPolicy;
-import org.cloudbus.cloudsim.core.SimEvent;
 import org.cloudbus.cloudsim.power.models.PowerModel;
-import org.fog.entities.dataEstructures.LatencyMatrix;
+import org.fog.entities.dataEstructures.NetworkMatrix;
 import org.fog.test.perfeval.testes.cluster.Monitoramento;
 
 public class FogDeviceWQHybrid extends FogDeviceWithQueue {
 ;
   private ArrayList<FogDeviceWQHybrid> vizinhos = new ArrayList<>();
   private ArrayList<FogDeviceWQHybrid> pais = new ArrayList<>();
-  private Double maiorLatencia, menorLatencia;
+  private Double maiorDelay, menorDelay;
   private int maiorFolga, menorFolga;
- 
+
   public FogDeviceWQHybrid(String name, long mips, int ram, double uplinkBandwidth, double downlinkBandwidth, double ratePerMips, PowerModel powerModel,int queueSize) throws Exception {
     super(name,mips,ram,uplinkBandwidth,downlinkBandwidth,ratePerMips,powerModel,queueSize);
   }
@@ -38,15 +37,15 @@ public class FogDeviceWQHybrid extends FogDeviceWithQueue {
   }
 
   private boolean calculaParametros(ArrayList<FogDeviceWQHybrid> lista) {
-    maiorLatencia = Double.MIN_VALUE;
-    menorLatencia = Double.MAX_VALUE;
+    maiorDelay = Double.MIN_VALUE;
+    menorDelay = Double.MAX_VALUE;
     maiorFolga = Integer.MIN_VALUE;
     menorFolga = Integer.MAX_VALUE;
     boolean encontrou = false;
 
     for(FogDeviceWQHybrid i : lista) {
       int folga = i.maxTupleQueueSize - i.tupleQueue.size();
-      Double latencia = LatencyMatrix.getLatency(this.getId(),i.getId());
+      Double delay = NetworkMatrix.getLatency(this.getId(),i.getId());
       if(i.tupleQueue.size() < i.maxTupleQueueSize) { //Se o candidato estiver cheio nem precisa olhar
         if(folga > maiorFolga) {
           maiorFolga = folga;
@@ -54,11 +53,11 @@ public class FogDeviceWQHybrid extends FogDeviceWithQueue {
         if(folga < menorFolga) {
           menorFolga = folga;
         }
-        if(latencia > maiorLatencia) {
-          maiorLatencia = latencia;
+        if(delay > maiorDelay) {
+          maiorDelay = delay;
         }
-        if(latencia < menorLatencia) {
-          menorLatencia = latencia;
+        if(delay < menorDelay) {
+          menorDelay = delay;
         }
         encontrou = true;
       }
@@ -70,30 +69,35 @@ public class FogDeviceWQHybrid extends FogDeviceWithQueue {
     pais.add(device);
   }
 
-  private FogDeviceWQHybrid calculaProximo(ArrayList<FogDeviceWQHybrid> lista) {
+  public FogDeviceWQHybrid calculaProximo(Tuple tuple) {
+    return this.calculaProximo(tuple,vizinhos);
+  }
+
+  private FogDeviceWQHybrid calculaProximo(Tuple tuple,ArrayList<FogDeviceWQHybrid> lista) {
     if (!calculaParametros(lista)) {
         return null; // Ninguém disponível ou configurado
     }
 
     int folga;
-    Double latencia,score,folgaNormalizada, latenciaNormalizada;
+    Double score,delayTotal,folgaNormalizada, delayNormalizado;
     double minMaxFolga = maiorFolga - menorFolga;
-    Double minMaxLatencia = maiorLatencia - menorLatencia;
+    Double minMaxDelay = maiorDelay - menorDelay;
     Double maiorScore = -1.0;
     FogDeviceWQHybrid proximo = null;
-    double rangeFolga = maiorFolga - menorFolga;  
-      if (rangeFolga == 0) rangeFolga = 1.0; // Evita NaN se todas as folgas forem iguais
 
-    double rangeLatencia = maiorLatencia - menorLatencia;
-      if (rangeLatencia == 0) rangeLatencia = 1.0; // Evita NaN se todas as latências forem iguais
+      if (minMaxFolga == 0) minMaxFolga = 1.0; // Evita NaN se todas as folgas forem iguais
+      if (minMaxDelay <= 0.00001) minMaxDelay = 1.0; // Evita NaN se todas as latências forem iguais
 
     for(FogDeviceWQHybrid i : lista) {
       if(i.tupleQueue.size() < i.maxTupleQueueSize) {
+        if(i.getId() == tuple.getSourceDeviceId()) {continue;}
         folga = i.maxTupleQueueSize - i.tupleQueue.size();
-        latencia = LatencyMatrix.getLatency(this.getId(),i.getId());
+
+        delayTotal = super.calculaDelay(i.getId(),tuple);
+
         folgaNormalizada = (folga - menorFolga)/minMaxFolga;
-        latenciaNormalizada = (maiorLatencia - latencia)/minMaxLatencia;
-        score = (0.5*folgaNormalizada)+(0.5*latenciaNormalizada);
+        delayNormalizado = (maiorDelay - delayTotal)/minMaxDelay;
+        score = (0.5*folgaNormalizada)+(0.5*delayNormalizado);
         if(score > maiorScore) {
           maiorScore = score;
           proximo = i;
@@ -103,48 +107,28 @@ public class FogDeviceWQHybrid extends FogDeviceWithQueue {
     return proximo;
   }
 
-  protected void updateQueue(SimEvent ev) {
-    Tuple tuple = (Tuple) ev.getData(); 
-    if((super.tupleQueue.size() >= super.maxTupleQueueSize) && (tuple.getDirection() != Tuple.ACTUATOR)) {
-      if(this.getLevel() <= 0){ // a nuvem nao tem pra quem redirecionar, ela e o ultimo recurso.
-        Monitoramento.addTuplaPerdida();
-      }
-      else {
-        FogDeviceWQHybrid proximo = null;
-        proximo = calculaProximo(vizinhos);
-
-        if(proximo != null){
-          Double latency = LatencyMatrix.getLatency(this.getId(),proximo.getId());
-          Monitoramento.addUsoRede(tuple.getCloudletFileSize());
-          Monitoramento.addTempoMedio(tuple.getActualTupleId(), latency);
-          send(proximo.getId(), latency, FogEvents.TUPLE_ARRIVAL, tuple);
-        }
-        else{
-          sendUp(tuple);
-        }
-      }
-    }
-    else {
-      super.processTupleArrival(ev);
-    }
-  }
-
   protected void sendUp(Tuple tuple) {
     FogDeviceWQHybrid proximo;
-    proximo = calculaProximo(pais);
+    proximo = calculaProximo(tuple,pais);
 
     if(proximo == null) {
       int idPai = this.getParentId();
-      Double latencia = LatencyMatrix.getLatency(this.getId(),idPai);
+      Double delay = super.calculaDelay(idPai,tuple);
+      
       Monitoramento.addUsoRede(tuple.getCloudletFileSize());
-      Monitoramento.addTempoMedio(tuple.getActualTupleId(), latencia);
-      send(idPai,latencia,FogEvents.TUPLE_ARRIVAL,tuple);
+      Monitoramento.addTempoMedio(tuple.getActualTupleId(), delay);
+      tuple.addLifetime(delay);
+      send(idPai,delay,FogEvents.TUPLE_ARRIVAL,tuple);
     }
     else {
-      Double latencia = LatencyMatrix.getLatency(this.getId(),proximo.getId());
+      Double delay = super.calculaDelay(proximo.getId(),tuple);
       Monitoramento.addUsoRede(tuple.getCloudletFileSize());
-      Monitoramento.addTempoMedio(tuple.getActualTupleId(), latencia);
-      send(proximo.getId(),latencia,FogEvents.TUPLE_ARRIVAL,tuple);
+      Monitoramento.addTempoMedio(tuple.getActualTupleId(), delay);
+      tuple.addLifetime(delay);
+      send(proximo.getId(),delay,FogEvents.TUPLE_ARRIVAL,tuple);
     }
   }
+
+
+  
 }

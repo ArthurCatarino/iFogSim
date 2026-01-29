@@ -5,7 +5,7 @@ import java.util.ArrayList;
 
 import org.cloudbus.cloudsim.UtilizationModelFull;
 import org.fog.application.AppEdge;
-import org.fog.entities.dataEstructures.LatencyMatrix;
+import org.fog.entities.dataEstructures.NetworkMatrix;
 import org.fog.test.perfeval.testes.cluster.Monitoramento;
 import org.fog.utils.*;
 
@@ -61,12 +61,13 @@ public class SensorLessSlack extends Sensor {
 		int actualTupleId = updateTimings(getSensorName(), tuple.getDestModuleName());
 		tuple.setActualTupleId(actualTupleId);
 
-    Double latencia = LatencyMatrix.getLatency(-1*getId(),tuple.getDestinationDeviceId());
+    Double delay = super.calculaDelay(tuple.getDestinationDeviceId(),tuple);
 		
 		Monitoramento.addUsoRede(tuple.getCloudletFileSize());
     Monitoramento.addTuplaEnviada();
-    Monitoramento.addTempoMedio(tuple.getActualTupleId() ,latencia);
-		send(tuple.getDestinationDeviceId(),latencia , FogEvents.TUPLE_ARRIVAL,tuple);
+    Monitoramento.addTempoMedio(tuple.getActualTupleId() ,delay);
+    tuple.addLifetime(delay);
+		send(tuple.getDestinationDeviceId(),delay , FogEvents.TUPLE_ARRIVAL,tuple);
 	}
 
   public void addDest(FogDeviceWithQueueLessSlack device) {

@@ -19,7 +19,7 @@ import org.fog.placement.Controller;
 import org.fog.placement.ModuleMapping;
 import org.fog.placement.ModulePlacementMapping;
 import org.fog.test.perfeval.testes.CriaDispositivos;
-import org.fog.entities.dataEstructures.LatencyMatrix;
+import org.fog.entities.dataEstructures.NetworkMatrix;
 
 public class GeradorTopologiaClusterLessSlack {
 
@@ -79,12 +79,12 @@ public class GeradorTopologiaClusterLessSlack {
     } 
    
     private static void criaTopologia() {
-        int filaNuvem = 5;
-        int filaLider = 3;
-        int filaWorker = 2;
+        int filaNuvem = 12;
+        int filaLider = 9;
+        int filaWorker = 6;
 
        // 1. Criar a NUVEM no Centro (50, 50)
-            FogDeviceWithQueueLessSlack cloud = deviceFactory.createFogDeviceWithQueueLessSlack("cloud", 100, 20, 100, 100, 0, 0.5, 10, 5,null,0,filaNuvem);
+            FogDeviceWithQueueLessSlack cloud = deviceFactory.createFogDeviceWithQueueLessSlack("cloud", 1100 , 20, 10000, 10000, 0, 0.7, 10,5,null,0,filaNuvem);
             DeviceLocation cloudLocation = new DeviceLocation(cloud, new Point(50, 50));
             System.out.println("Nuvem criada em 50 50");
 
@@ -110,12 +110,12 @@ public class GeradorTopologiaClusterLessSlack {
                 // Usei cast para garantir que seja do tipo certo
                 FogDeviceWithQueueLessSlack fogLider = (FogDeviceWithQueueLessSlack) deviceFactory.createFogDeviceWithQueueLessSlack(
                     nomeLider, 
-                    1000, 4000, 100, 100, 1, 0.2, 10.0, 2.0, 
+                    550, 4, 10000, 10000, 1, 0.2, 6.0, 2.0, 
                     "cloud", // Pai = Cloud
-                    50, // Latencia maior (WAN)
+                    50, 
                     filaLider
                 );
-                LatencyMatrix.addLatency(fogLider.getId(), cloudLocation.device.getId(),centro.distancia(cloudLocation.p));
+                NetworkMatrix.addLatency(fogLider.getId(), cloudLocation.device.getId(),centro.distancia(cloudLocation.p));
 
                 
 
@@ -126,7 +126,7 @@ public class GeradorTopologiaClusterLessSlack {
 
                     FogDeviceWithQueueLessSlack fogNode = (FogDeviceWithQueueLessSlack) deviceFactory.createFogDeviceWithQueueLessSlack(
                         nomeFog, 
-                        500, 1000, 100, 100, 2, 0.1, 5, 1.5, 
+                        300, 1, 10000, 10000, 2, 0.01, 4, 1, 
                         nomeLider, // Pai = Líder do Cluster (Conexão Hierárquica)
                         5, 
                         filaWorker
@@ -135,7 +135,7 @@ public class GeradorTopologiaClusterLessSlack {
                     // CORREÇÃO: Adicionar na lista global para P2P e Sensores
                     todosOsFogs.add(new DeviceLocation(fogNode, pos));
                     fogNode.addNeighbor(fogLider);
-                    LatencyMatrix.addLatency(fogNode.getId(),fogLider.getId(),pos.distancia(centro));
+                    NetworkMatrix.addLatency(fogNode.getId(),fogLider.getId(),pos.distancia(centro));
                     System.out.println("  -> Fog Criado: " + nomeFog + " em " + pos);
                 }
 
@@ -153,16 +153,16 @@ public class GeradorTopologiaClusterLessSlack {
 
                     // Cria sensor (Atenção: verifique os parametros do seu createSensor)
                     SensorLessSlack sensor = deviceFactory.createSensorLessSlack(nomeSensor, tipoSorteado.getTupleType(),tipoSorteado.getFrequenciaMs(),gateway.device.getName(),2.0);
-                    LatencyMatrix.addLatency(-1*sensor.getId(),gateway.device.getId(),posSensor.distancia(gateway.p));
+                    NetworkMatrix.addLatency(-1*sensor.getId(),gateway.device.getId(),posSensor.distancia(gateway.p));
                     
                     for(DeviceLocation d : todosOsFogs) {
                         if(d.p.distancia(posSensor) < RAIO_COMUNICACAO_P2P) {
                             sensor.addDest(d.device);
-                            LatencyMatrix.addLatency(-1*sensor.getId(),d.device.getId(),posSensor.distancia(d.p)); // adiciona o id dos sensores como numeros negativos para nao haver conflito e nem a necessidade de criar outra matriz
+                            NetworkMatrix.addLatency(-1*sensor.getId(),d.device.getId(),posSensor.distancia(d.p)); // adiciona o id dos sensores como numeros negativos para nao haver conflito e nem a necessidade de criar outra matriz
                         }
                     }
 
-                    System.out.println("  -> Sensor " + nomeSensor + " (" + posSensor + ") conectado a " + gateway.device.getName());
+                    //System.out.println("  -> Sensor " + nomeSensor + " (" + posSensor + ") conectado a " + gateway.device.getName());
                 }
                 clusterId++;
             }
@@ -179,8 +179,8 @@ public class GeradorTopologiaClusterLessSlack {
                     // Verifica se ambos são da classe correta (segurança) e calcula distância
                     if (d1.p.distancia(d2.p) <= RAIO_COMUNICACAO_P2P) {
         
-                        LatencyMatrix.addLatency(d1.device.getId(),d2.device.getId(),d1.p.distancia(d2.p));
-                        LatencyMatrix.addLatency(d2.device.getId(),d1.device.getId(),d1.p.distancia(d2.p));
+                        NetworkMatrix.addLatency(d1.device.getId(),d2.device.getId(),d1.p.distancia(d2.p));
+                        NetworkMatrix.addLatency(d2.device.getId(),d1.device.getId(),d1.p.distancia(d2.p));
 
                         d1.device.addNeighbor(d2.device); // Adiciona-os como vizinhos
                         d2.device.addNeighbor(d1.device);

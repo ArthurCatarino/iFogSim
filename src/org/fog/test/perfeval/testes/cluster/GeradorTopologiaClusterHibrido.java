@@ -17,7 +17,7 @@ import org.fog.placement.Controller;
 import org.fog.placement.ModuleMapping;
 import org.fog.placement.ModulePlacementMapping;
 import org.fog.test.perfeval.testes.CriaDispositivos;
-import org.fog.entities.dataEstructures.LatencyMatrix;
+import org.fog.entities.dataEstructures.NetworkMatrix;
 
 public class GeradorTopologiaClusterHibrido {
 
@@ -27,7 +27,7 @@ public class GeradorTopologiaClusterHibrido {
     // Configurações da Topologia
     private static final int NUM_SENSORES_POR_CLUSTER = 100;    
     private static final int NUM_DISPOSITIVOS_POR_CLUSTER = (int) (Math.log(NUM_SENSORES_POR_CLUSTER)/Math.log(2)); 
-    private static final double RAIO_COMUNICACAO_P2P = 10.0;   
+    private static final double RAIO_COMUNICACAO_P2P = 5.0;   
     private static final double DESVIO_PADRAO_CLUSTER = 10.0;
 
     private static FogBroker broker;
@@ -77,12 +77,12 @@ public class GeradorTopologiaClusterHibrido {
     } 
    
     private static void criaTopologia() {
-        int filaNuvem = 5;
-        int filaLider = 3;
-        int filaWorker = 2;
+        int filaNuvem = 12;
+        int filaLider = 9;
+        int filaWorker = 6;
 
        // 1. Criar a NUVEM no Centro (50, 50)
-            FogDeviceWQHybrid cloud = deviceFactory.createFogDeviceWQHybrid("cloud", 100, 20, 100, 100, 0, 0.5, 10, 5,null,0,filaNuvem);
+            FogDeviceWQHybrid cloud = deviceFactory.createFogDeviceWQHybrid("cloud", 1100 , 20, 10000, 10000, 0, 0.7, 10,5,null,0,filaNuvem);
             DeviceLocation cloudLocation = new DeviceLocation(cloud, new Point(50, 50));
             System.out.println("Nuvem criada em 50 50");
 
@@ -105,15 +105,15 @@ public class GeradorTopologiaClusterHibrido {
                 String nomeLider = "Lider_Q" + clusterId;
                 
                 // A. CRIAR LÍDER (Conectado à Nuvem)
+                // Usei cast para garantir que seja do tipo certo
                 FogDeviceWQHybrid fogLider = (FogDeviceWQHybrid) deviceFactory.createFogDeviceWQHybrid(
                     nomeLider, 
-                    1000, 4000, 100, 100, 1, 0.2, 10.0, 2.0, 
+                    550, 4, 10000, 10000, 1, 0.2, 6.0, 2.0, 
                     "cloud", // Pai = Cloud
-                    50, // Latencia maior (WAN)
+                    50, 
                     filaLider
                 );
-                LatencyMatrix.addLatency(fogLider.getId(), cloudLocation.device.getId(),centro.distancia(cloudLocation.p));
-                fogLider.addPais(cloud);
+                NetworkMatrix.addLatency(fogLider.getId(), cloudLocation.device.getId(),centro.distancia(cloudLocation.p));
 
                 
 
@@ -124,15 +124,16 @@ public class GeradorTopologiaClusterHibrido {
 
                     FogDeviceWQHybrid fogNode = (FogDeviceWQHybrid) deviceFactory.createFogDeviceWQHybrid(
                         nomeFog, 
-                        500, 1000, 100, 100, 2, 0.1, 5, 1.5, 
+                        300, 1, 10000, 10000, 2, 0.01, 4, 1, 
                         nomeLider, // Pai = Líder do Cluster (Conexão Hierárquica)
                         5, 
                         filaWorker
                     );
-                
+                    
+                    // CORREÇÃO: Adicionar na lista global para P2P e Sensores
                     todosOsFogs.add(new DeviceLocation(fogNode, pos));
-                    fogNode.addPais(fogLider);
-                    LatencyMatrix.addLatency(fogNode.getId(),fogLider.getId(),pos.distancia(centro));
+                    fogNode.addNeighbor(fogLider);
+                    NetworkMatrix.addLatency(fogNode.getId(),fogLider.getId(),pos.distancia(centro));
                     System.out.println("  -> Fog Criado: " + nomeFog + " em " + pos);
                 }
 
@@ -144,22 +145,22 @@ public class GeradorTopologiaClusterHibrido {
                     // Procura o gateway mais próximo na lista geral (pode ser o líder ou um worker)
                     DeviceLocation gateway = encontrarGatewayMaisProximo(posSensor, todosOsFogs);
                     
+                    
                     //Sorteio o tipo do sensor
                     TipoSensor tipoSorteado = TipoSensor.sortear();
 
-                    // Cria sensor
+                    // Cria sensor (Atenção: verifique os parametros do seu createSensor)
                     SensorHybrid sensor = deviceFactory.createSensorHybrid(nomeSensor, tipoSorteado.getTupleType(),tipoSorteado.getFrequenciaMs(),gateway.device.getName(),2.0);
-                    LatencyMatrix.addLatency(-1*sensor.getId(),gateway.device.getId(),posSensor.distancia(gateway.p));
-                    sensor.addDest(gateway.device);
+                    NetworkMatrix.addLatency(-1*sensor.getId(),gateway.device.getId(),posSensor.distancia(gateway.p));
                     
                     for(DeviceLocation d : todosOsFogs) {
                         if(d.p.distancia(posSensor) < RAIO_COMUNICACAO_P2P) {
                             sensor.addDest(d.device);
-                            LatencyMatrix.addLatency(-1*sensor.getId(),d.device.getId(),posSensor.distancia(d.p)); // adiciona o id dos sensores como numeros negativos para nao haver conflito e nem a necessidade de criar outra matriz
+                            NetworkMatrix.addLatency(-1*sensor.getId(),d.device.getId(),posSensor.distancia(d.p)); // adiciona o id dos sensores como numeros negativos para nao haver conflito e nem a necessidade de criar outra matriz
                         }
                     }
 
-                    System.out.println("  -> Sensor " + nomeSensor + " (" + posSensor + ") conectado a " + gateway.device.getName());
+                    //System.out.println("  -> Sensor " + nomeSensor + " (" + posSensor + ") conectado a " + gateway.device.getName());
                 }
                 clusterId++;
             }
@@ -176,22 +177,11 @@ public class GeradorTopologiaClusterHibrido {
                     // Verifica se ambos são da classe correta (segurança) e calcula distância
                     if (d1.p.distancia(d2.p) <= RAIO_COMUNICACAO_P2P) {
         
-                        LatencyMatrix.addLatency(d1.device.getId(),d2.device.getId(),d1.p.distancia(d2.p));
-                        LatencyMatrix.addLatency(d2.device.getId(),d1.device.getId(),d1.p.distancia(d2.p));
-                        
-                        if(d1.device.getLevel() == d2.device.getLevel()) {
+                        NetworkMatrix.addLatency(d1.device.getId(),d2.device.getId(),d1.p.distancia(d2.p));
+                        NetworkMatrix.addLatency(d2.device.getId(),d1.device.getId(),d1.p.distancia(d2.p));
 
                         d1.device.addNeighbor(d2.device); // Adiciona-os como vizinhos
                         d2.device.addNeighbor(d1.device);
-
-                        }
-
-                        else if(d1.device.getLevel() > d2.device.getLevel()) {
-                          d2.device.addPais(d1.device);
-                        }
-                        else {
-                          d1.device.addPais(d2.device);
-                        }
                         
                         System.out.println("    Link P2P: " + d1.device.getName() + " <--> " + d2.device.getName() + " (Dist: " + String.format("%.1f", d1.p.distancia(d2.p)) + ")");
                         linksP2P++;

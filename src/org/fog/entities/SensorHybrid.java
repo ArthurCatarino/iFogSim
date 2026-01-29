@@ -5,14 +5,13 @@ import java.util.ArrayList;
 
 import org.cloudbus.cloudsim.UtilizationModelFull;
 import org.fog.application.AppEdge;
-import org.fog.entities.dataEstructures.LatencyMatrix;
 import org.fog.test.perfeval.testes.cluster.Monitoramento;
 import org.fog.utils.*;
 
 public class SensorHybrid extends Sensor {
 
   private ArrayList<FogDeviceWQHybrid> destinos;
-  private Double maiorLatencia, menorLatencia;
+  private Double maiorDelay, menorDelay;
   private int maiorFolga, menorFolga;
   
   public SensorHybrid(String name, String tupleType, int userId, String appId, Distribution transmitDistribution) {
@@ -24,18 +23,18 @@ public class SensorHybrid extends Sensor {
     destinos.add(device);
   }
 
-  private void resetaParametros(ArrayList<FogDeviceWQHybrid> lista) {
-    maiorLatencia = Double.MIN_VALUE;
-    menorLatencia = Double.MAX_VALUE;
+  private boolean calculaParametros(ArrayList<FogDeviceWQHybrid> lista,Tuple tuple) {
+    maiorDelay = Double.MIN_VALUE;
+    menorDelay = Double.MAX_VALUE;
     maiorFolga = Integer.MIN_VALUE;
     menorFolga = Integer.MAX_VALUE;
-    calculaParametros(lista);
-  }
 
-  private void calculaParametros(ArrayList<FogDeviceWQHybrid> lista) {
+    int folga;
+    Double delay;
+    boolean encontrou = false;
     for(FogDeviceWQHybrid i : lista) {
-      int folga = i.maxTupleQueueSize - i.tupleQueue.size();
-      Double latencia = LatencyMatrix.getLatency(-1*this.getId(),i.getId());
+      folga = i.maxTupleQueueSize - i.tupleQueue.size();
+      delay = super.calculaDelay(i.getId(), tuple);
       if(i.tupleQueue.size() < i.maxTupleQueueSize) { //Se o candidato estiver cheio nem precisa olhar
         if(folga > maiorFolga) {
           maiorFolga = folga;
@@ -43,31 +42,40 @@ public class SensorHybrid extends Sensor {
         if(folga < menorFolga) {
           menorFolga = folga;
         }
-        if(latencia > maiorLatencia) {
-          maiorLatencia = latencia;
+        if(delay > maiorDelay) {
+          maiorDelay = delay;
         }
-        if(latencia < menorLatencia) {
-          menorLatencia = latencia;
+        if(delay < menorDelay) {
+          menorDelay = delay;
         }
+        encontrou = true;
       }
     }
+    return encontrou;
   }
 
-  private int calculaProximo(ArrayList<FogDeviceWQHybrid> lista) {
+  private int calculaProximo(ArrayList<FogDeviceWQHybrid> lista, Tuple tuple) {
+    if(!calculaParametros(lista, tuple)){
+      return -1;
+    }
+
     int folga;
-    Double latencia,score,folgaNormalizada, latenciaNormalizada;
+    Double Delay,score,folgaNormalizada, DelayNormalizada;
     double minMaxFolga = maiorFolga - menorFolga;
-    Double minMaxLatencia = maiorLatencia - menorLatencia;
-    Double maiorScore = Double.MIN_VALUE;
+    Double minMaxDelay = maiorDelay - menorDelay;
+    Double maiorScore = -1.0;
     FogDeviceWQHybrid proximo = null;
+
+      if (minMaxFolga == 0) minMaxFolga = 1.0; // Evita NaN se todas as folgas forem iguais
+      if (minMaxDelay <= 0.00001) minMaxDelay = 1.0; // Evita NaN se todas as latências forem iguais
 
     for(FogDeviceWQHybrid i : lista) {
       if(i.tupleQueue.size() < i.maxTupleQueueSize) {
         folga = i.maxTupleQueueSize - i.tupleQueue.size();
-        latencia = LatencyMatrix.getLatency(-1*this.getId(),i.getId());
+        Delay = super.calculaDelay(i.getId(), tuple);
         folgaNormalizada = (folga - menorFolga)/minMaxFolga;
-        latenciaNormalizada = (maiorLatencia - latencia)/minMaxLatencia;
-        score = (0.5*folgaNormalizada)+(0.5*latenciaNormalizada);
+        DelayNormalizada = (maiorDelay - Delay)/minMaxDelay;
+        score = (0.5*folgaNormalizada)+(0.5*DelayNormalizada);
         if(score > maiorScore) {
           maiorScore = score;
           proximo = i;
@@ -98,8 +106,7 @@ public class SensorHybrid extends Sensor {
 		
 		tuple.setDestModuleName(_edge.getDestination());
 		tuple.setSrcModuleName(getSensorName());
-    resetaParametros(destinos);
-    int proximo = calculaProximo(destinos);
+    int proximo = calculaProximo(destinos,tuple);
 
     if(proximo != -1) {
 		tuple.setDestinationDeviceId(proximo);
@@ -110,11 +117,12 @@ public class SensorHybrid extends Sensor {
 		int actualTupleId = updateTimings(getSensorName(), tuple.getDestModuleName());
 		tuple.setActualTupleId(actualTupleId);
 
-    Double latencia = LatencyMatrix.getLatency(-1*getId(),tuple.getDestinationDeviceId());
+    Double delay = super.calculaDelay(tuple.getDestinationDeviceId(),tuple);
 		
 		Monitoramento.addUsoRede(tuple.getCloudletFileSize());
     Monitoramento.addTuplaEnviada();
-    Monitoramento.addTempoMedio(tuple.getActualTupleId() ,latencia);
-		send(tuple.getDestinationDeviceId(),latencia , FogEvents.TUPLE_ARRIVAL,tuple);
+    Monitoramento.addTempoMedio(tuple.getActualTupleId() ,delay);
+    tuple.addLifetime(delay);
+		send(tuple.getDestinationDeviceId(),delay , FogEvents.TUPLE_ARRIVAL,tuple);
 	}
 }

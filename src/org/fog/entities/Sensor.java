@@ -9,6 +9,7 @@ import org.cloudbus.cloudsim.core.SimEvent;
 import org.fog.application.AppEdge;
 import org.fog.application.AppLoop;
 import org.fog.application.Application;
+import org.fog.entities.dataEstructures.NetworkMatrix;
 import org.fog.test.perfeval.testes.LogsReport;
 import org.fog.utils.*;
 import org.fog.utils.distribution.Distribution;
@@ -138,6 +139,13 @@ public class Sensor extends SimEntity{
 		}
 			
 	}
+
+	protected double calculaDelay(int proximo, Tuple tuple) {
+    Double latency = NetworkMatrix.getLatency(-1*this.getId(),proximo);
+    Double banda = NetworkMatrix.getBand(-1*this.getId(),proximo);
+    Double tempoTransmissao = tuple.getCloudletFileSize() / banda;
+    return latency + tempoTransmissao;
+  }
 
 	@Override
 	public void shutdownEntity() {

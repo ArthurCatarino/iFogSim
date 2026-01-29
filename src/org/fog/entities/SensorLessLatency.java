@@ -5,7 +5,7 @@ import java.util.ArrayList;
 
 import org.cloudbus.cloudsim.UtilizationModelFull;
 import org.fog.application.AppEdge;
-import org.fog.entities.dataEstructures.LatencyMatrix;
+import org.fog.entities.dataEstructures.NetworkMatrix;
 import org.fog.test.perfeval.testes.cluster.Monitoramento;
 import org.fog.utils.*;
 
@@ -18,19 +18,20 @@ public class SensorLessLatency extends Sensor {
         destinos = new ArrayList<>();
       }
 
-  private int findDeviceWithLessLatency() {
+  private int findDeviceWithLessLatency(Tuple tuple) {
     FogDeviceWQLessLatency proximo = null;
     Double menor = Double.MAX_VALUE;
       for(FogDeviceWQLessLatency i : destinos){
-        Double latencia = LatencyMatrix.getLatency(-1*this.getId(),i.getId());
-        if((latencia < menor) && (i.tupleQueue.size() < i.maxTupleQueueSize)) {
-          menor = latencia;
+        Double delay = super.calculaDelay(i.getId(),tuple);
+        if((delay < menor) && (i.tupleQueue.size() < i.maxTupleQueueSize)) {
+          menor = delay;
           proximo = i;
         }
       }
       if(proximo != null){
        return proximo.getId();
       }
+
       else {
         return -1;
       }
@@ -52,7 +53,7 @@ public class SensorLessLatency extends Sensor {
 		
 		tuple.setDestModuleName(_edge.getDestination());
 		tuple.setSrcModuleName(getSensorName());
-    int proximo = findDeviceWithLessLatency();
+    int proximo = findDeviceWithLessLatency(tuple);
     if(proximo != -1) {
 		tuple.setDestinationDeviceId(proximo);
     }
@@ -62,12 +63,13 @@ public class SensorLessLatency extends Sensor {
 		int actualTupleId = updateTimings(getSensorName(), tuple.getDestModuleName());
 		tuple.setActualTupleId(actualTupleId);
 
-    Double latencia = LatencyMatrix.getLatency(-1*getId(),tuple.getDestinationDeviceId());
+    Double delay = super.calculaDelay(tuple.getDestinationDeviceId(),tuple);
 		
 		Monitoramento.addUsoRede(tuple.getCloudletFileSize());
     Monitoramento.addTuplaEnviada();
-    Monitoramento.addTempoMedio(tuple.getActualTupleId() ,latencia);
-		send(tuple.getDestinationDeviceId(),latencia , FogEvents.TUPLE_ARRIVAL,tuple);
+    Monitoramento.addTempoMedio(tuple.getActualTupleId() ,delay);
+    tuple.addLifetime(delay);
+		send(tuple.getDestinationDeviceId(),delay , FogEvents.TUPLE_ARRIVAL,tuple);
 	}
 
   public void addDest(FogDeviceWQLessLatency device) {
