@@ -1,12 +1,8 @@
 package org.fog.entities;
 
+import org.fog.test.perfeval.testes.cluster.TipoSensor;
 import org.fog.utils.distribution.Distribution;
 import java.util.ArrayList;
-
-import org.cloudbus.cloudsim.UtilizationModelFull;
-import org.fog.application.AppEdge;
-import org.fog.test.perfeval.testes.cluster.Monitoramento;
-import org.fog.utils.*;
 
 public class SensorHybrid extends Sensor {
 
@@ -14,8 +10,8 @@ public class SensorHybrid extends Sensor {
   private Double maiorDelay, menorDelay;
   private int maiorFolga, menorFolga;
   
-  public SensorHybrid(String name, String tupleType, int userId, String appId, Distribution transmitDistribution) {
-        super(name,tupleType,userId,appId,transmitDistribution);
+  public SensorHybrid(String name, String tupleType, int userId, String appId, Distribution transmitDistribution,ArrayList<TipoSensor> tipos) {
+        super(name,tupleType,userId,appId,transmitDistribution,tipos);
         destinos = new ArrayList<>();
   }
 
@@ -23,7 +19,7 @@ public class SensorHybrid extends Sensor {
     destinos.add(device);
   }
 
-  private boolean calculaParametros(ArrayList<FogDeviceWQHybrid> lista,Tuple tuple) {
+  private boolean calculaParametros(Tuple tuple) {
     maiorDelay = Double.MIN_VALUE;
     menorDelay = Double.MAX_VALUE;
     maiorFolga = Integer.MIN_VALUE;
@@ -32,7 +28,7 @@ public class SensorHybrid extends Sensor {
     int folga;
     Double delay;
     boolean encontrou = false;
-    for(FogDeviceWQHybrid i : lista) {
+    for(FogDeviceWQHybrid i : destinos) {
       folga = i.maxTupleQueueSize - i.tupleQueue.size();
       delay = super.calculaDelay(i.getId(), tuple);
       if(i.tupleQueue.size() < i.maxTupleQueueSize) { //Se o candidato estiver cheio nem precisa olhar
@@ -53,9 +49,10 @@ public class SensorHybrid extends Sensor {
     }
     return encontrou;
   }
-
-  private int calculaProximo(ArrayList<FogDeviceWQHybrid> lista, Tuple tuple) {
-    if(!calculaParametros(lista, tuple)){
+  
+  @Override
+  protected int calculaProximo(Tuple tuple) {
+    if(!calculaParametros(tuple)){
       return -1;
     }
 
@@ -69,7 +66,7 @@ public class SensorHybrid extends Sensor {
       if (minMaxFolga == 0) minMaxFolga = 1.0; // Evita NaN se todas as folgas forem iguais
       if (minMaxDelay <= 0.00001) minMaxDelay = 1.0; // Evita NaN se todas as latências forem iguais
 
-    for(FogDeviceWQHybrid i : lista) {
+    for(FogDeviceWQHybrid i : destinos) {
       if(i.tupleQueue.size() < i.maxTupleQueueSize) {
         folga = i.maxTupleQueueSize - i.tupleQueue.size();
         Delay = super.calculaDelay(i.getId(), tuple);
@@ -90,39 +87,5 @@ public class SensorHybrid extends Sensor {
     }
   }
 
-    public void transmit(){
-		AppEdge _edge = null;
-		for(AppEdge edge : getApp().getEdges()){
-			if(edge.getSource().equals(getTupleType()))
-				_edge = edge;
-		}
-		long cpuLength = (long) _edge.getTupleCpuLength();
-		long nwLength = (long) _edge.getTupleNwLength();
-		
-		Tuple tuple = new Tuple(getAppId(), FogUtils.generateTupleId(), Tuple.UP, cpuLength, 1, nwLength, 3, 
-				new UtilizationModelFull(), new UtilizationModelFull(), new UtilizationModelFull());
-		tuple.setUserId(getUserId());
-		tuple.setTupleType(getTupleType());
-		
-		tuple.setDestModuleName(_edge.getDestination());
-		tuple.setSrcModuleName(getSensorName());
-    int proximo = calculaProximo(destinos,tuple);
-
-    if(proximo != -1) {
-		tuple.setDestinationDeviceId(proximo);
-    }
-    else {
-      tuple.setDestinationDeviceId(getGatewayDeviceId());
-    }
-		int actualTupleId = updateTimings(getSensorName(), tuple.getDestModuleName());
-		tuple.setActualTupleId(actualTupleId);
-
-    Double delay = super.calculaDelay(tuple.getDestinationDeviceId(),tuple);
-		
-		Monitoramento.addUsoRede(tuple.getCloudletFileSize());
-    Monitoramento.addTuplaEnviada();
-    Monitoramento.addTempoMedio(tuple.getActualTupleId() ,delay);
-    tuple.addLifetime(delay);
-		send(tuple.getDestinationDeviceId(),delay , FogEvents.TUPLE_ARRIVAL,tuple);
-	}
+   
 }

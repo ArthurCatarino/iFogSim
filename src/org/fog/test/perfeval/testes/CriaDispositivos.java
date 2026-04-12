@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Arrays;
 
 import org.cloudbus.cloudsim.Host;
 import org.cloudbus.cloudsim.NetworkTopology;
@@ -32,6 +33,7 @@ import org.fog.scheduler.StreamOperatorScheduler;
 import org.fog.utils.FogLinearPowerModel;
 import org.fog.utils.FogUtils;
 import org.fog.utils.distribution.DeterministicDistribution;
+import org.fog.test.perfeval.testes.cluster.TipoSensor;
 
 
 public class CriaDispositivos {
@@ -41,6 +43,8 @@ public class CriaDispositivos {
   private Map<String, Integer> idByName;
   private int brokerId;
   private String appId;
+
+  private ArrayList<TipoSensor> tipos = new ArrayList<>(Arrays.asList(TipoSensor.values()));
     
   public CriaDispositivos(int brokerId,String appId) {
     fogDevices = new ArrayList<FogDevice>();
@@ -166,7 +170,7 @@ public class CriaDispositivos {
   
   public SensorLessSlack createSensorLessSlack(String name, String tupleType, int frequenciaDeEnvio, String idPai, double latencia) {
     SensorLessSlack sensor = new SensorLessSlack(name, tupleType, brokerId, appId,
-    new DeterministicDistribution(frequenciaDeEnvio)); // Define a frequencia a qual o sensor enviara dados
+    new DeterministicDistribution(frequenciaDeEnvio),tipos); // Define a frequencia a qual o sensor enviara dados
     sensor.setGatewayDeviceId(idByName.get(idPai)); // Define um fog como seu pai
     sensor.setLatency(latencia);
     NetworkTopology.addLink(sensor.getId(), idByName.get(idPai), 100.0, latencia);

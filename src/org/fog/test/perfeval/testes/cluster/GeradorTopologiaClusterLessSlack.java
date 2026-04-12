@@ -27,7 +27,7 @@ public class GeradorTopologiaClusterLessSlack {
     private static double gridSize = 100.0;
     
     // Configurações da Topologia
-    private static final int NUM_SENSORES_POR_CLUSTER = 100 ;    
+    private static final int NUM_SENSORES_POR_CLUSTER = 20 ;    
     private static final int NUM_DISPOSITIVOS_POR_CLUSTER = (int) (Math.log(NUM_SENSORES_POR_CLUSTER)/Math.log(2)); 
     private static final double RAIO_COMUNICACAO_P2P = 5.0;   
     private static final double DESVIO_PADRAO_CLUSTER = 10.0;

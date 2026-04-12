@@ -1,6 +1,7 @@
 package org.fog.entities;
 
 import java.util.ArrayList;
+import java.util.Random;
 
 import org.cloudbus.cloudsim.UtilizationModelFull;
 import org.cloudbus.cloudsim.core.CloudSim;
@@ -13,6 +14,8 @@ import org.fog.entities.dataEstructures.NetworkMatrix;
 import org.fog.test.perfeval.testes.LogsReport;
 import org.fog.utils.*;
 import org.fog.utils.distribution.Distribution;
+import org.fog.test.perfeval.testes.cluster.Monitoramento;
+import org.fog.test.perfeval.testes.cluster.TipoSensor;
 
 public class Sensor extends SimEntity{
 	
@@ -28,6 +31,7 @@ public class Sensor extends SimEntity{
 	private int controllerId;
 	private Application app;
 	private double latency;
+	private ArrayList<TipoSensor> tupleOptions;
 
 	private int transmissionStartDelay = Config.TRANSMISSION_START_DELAY;
 	
@@ -39,11 +43,13 @@ public class Sensor extends SimEntity{
 		this.geoLocation = geoLocation;
 		this.outputSize = 3;
 		this.setTransmitDistribution(transmitDistribution);
+		
 		setUserId(userId);
 		setDestModuleName(destModuleName);
 		setTupleType(tupleType);
 		setSensorName(sensorName);
 		setLatency(latency);
+		
 	}
 	
 	public Sensor(String name, int userId, String appId, int gatewayDeviceId, double latency, GeoLocation geoLocation, 
@@ -69,39 +75,59 @@ public class Sensor extends SimEntity{
 	 * @param appId
 	 * @param transmitDistribution
 	 */
-	public Sensor(String name, String tupleType, int userId, String appId, Distribution transmitDistribution) {
+	public Sensor(String name, String tupleType, int userId, String appId, Distribution transmitDistribution,ArrayList<TipoSensor> tipos) {
 		super(name);
 		this.setAppId(appId);
 		this.setTransmitDistribution(transmitDistribution);
+		this.tupleOptions = tipos;
 		setTupleType(tupleType);
 		setSensorName(tupleType);
 		setUserId(userId);
 
 	}
 	
+	protected int calculaProximo(Tuple tuple) {
+		return -1;
+	}
+	
 	public void transmit(){
+		//Gera uma tupla de um de seus tipos pre-definidos
+		Random gerador = new Random();
+		int sorteio = gerador.nextInt(tupleOptions.size());
+
+		long cpuLength = (long) tupleOptions.get(sorteio).getMips();
+		long nwLength = (long) tupleOptions.get(sorteio).getTamanhoBytes();
+
 		AppEdge _edge = null;
 		for(AppEdge edge : getApp().getEdges()){
-			if(edge.getSource().equals(getTupleType()))
+			if(edge.getSource().equals(tupleOptions.get(sorteio).getTupleType()))
 				_edge = edge;
 		}
-		long cpuLength = (long) _edge.getTupleCpuLength();
-		long nwLength = (long) _edge.getTupleNwLength();
-		
-		Tuple tuple = new Tuple(getAppId(), FogUtils.generateTupleId(), Tuple.UP, cpuLength, 1, nwLength, outputSize, 
+
+		Tuple tuple = new Tuple(getAppId(), FogUtils.generateTupleId(), Tuple.UP, cpuLength, 1, nwLength, 3, 
 				new UtilizationModelFull(), new UtilizationModelFull(), new UtilizationModelFull());
 		tuple.setUserId(getUserId());
-		tuple.setTupleType(getTupleType());
+		tuple.setTupleType(tupleOptions.get(sorteio).getTupleType());
 		
 		tuple.setDestModuleName(_edge.getDestination());
 		tuple.setSrcModuleName(getSensorName());
-		tuple.setDestinationDeviceId(getGatewayDeviceId());
-
+    int proximo = calculaProximo(tuple);
+    if(proximo != -1) {
+		tuple.setDestinationDeviceId(proximo);
+    }
+    else {
+      tuple.setDestinationDeviceId(getGatewayDeviceId());
+    }
 		int actualTupleId = updateTimings(getSensorName(), tuple.getDestModuleName());
 		tuple.setActualTupleId(actualTupleId);
+
+    Double delay = calculaDelay(tuple.getDestinationDeviceId(),tuple);
 		
-		send(gatewayDeviceId, getLatency(), FogEvents.TUPLE_ARRIVAL,tuple);
-		LogsReport.sensorLogs(getName(),tuple.getActualTupleId(),tuple);
+		Monitoramento.addUsoRede(tuple.getCloudletFileSize());
+    Monitoramento.addTuplaEnviada();
+    Monitoramento.addTempoMedio(tuple.getActualTupleId() ,delay);
+    tuple.addLifetime(delay);
+		send(tuple.getDestinationDeviceId(),delay , FogEvents.TUPLE_ARRIVAL,tuple);
 	}
 	
 	protected int updateTimings(String src, String dest){
