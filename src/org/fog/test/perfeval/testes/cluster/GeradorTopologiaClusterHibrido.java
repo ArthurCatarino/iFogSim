@@ -38,6 +38,7 @@ public class GeradorTopologiaClusterHibrido {
     private static String appId = "ClusterApp";
 
     public static void main(String[] args) {
+        System.out.println("Rodando com Java versão: " + System.getProperty("java.version"));
         try {
             Log.disable();
             CloudSim.init(1, java.util.Calendar.getInstance(), false);
