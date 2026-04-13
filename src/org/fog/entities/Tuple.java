@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.cloudbus.cloudsim.Cloudlet;
 import org.cloudbus.cloudsim.UtilizationModel;
+import org.cloudbus.cloudsim.core.CloudSim;
 
 public class Tuple extends Cloudlet{
 
@@ -23,6 +24,7 @@ public class Tuple extends Cloudlet{
 	private int sourceDeviceId;
 	private int sourceModuleId;
 	private Double lifetime;
+	private Double emitTupleTime;
 	/**
 	 * Map to keep track of which module instances has a tuple traversed.
 	 * 
@@ -52,6 +54,7 @@ public class Tuple extends Cloudlet{
 		setModuleCopyMap(new HashMap<String, Integer>());
 		setDestinationDeviceId(-1);
 		lifetime = 0.0;
+		emitTupleTime = CloudSim.clock();
 	}
 
 	public int getActualTupleId() {
@@ -168,6 +171,10 @@ public class Tuple extends Cloudlet{
 
 	public Double getLifeTime() {
 		return lifetime;
+	}
+
+	public Double getEmitTupleTime(){
+		return emitTupleTime;
 	}
 
 }

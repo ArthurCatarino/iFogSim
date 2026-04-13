@@ -125,7 +125,6 @@ public class Sensor extends SimEntity{
 		
 		Monitoramento.addUsoRede(tuple.getCloudletFileSize());
     Monitoramento.addTuplaEnviada();
-    Monitoramento.addTempoMedio(tuple.getActualTupleId() ,delay);
     tuple.addLifetime(delay);
 		send(tuple.getDestinationDeviceId(),delay , FogEvents.TUPLE_ARRIVAL,tuple);
 	}

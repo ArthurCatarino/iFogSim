@@ -17,10 +17,10 @@ public class SensorLessSlack extends Sensor {
   @Override
   protected int calculaProximo(Tuple tuple) {
     FogDeviceWithQueueLessSlack proximo = null;
-    Integer maior = -1;
+    long maior = -1;
       for(FogDeviceWithQueueLessSlack i : destinos){
-        if(i.maxTupleQueueSize - i.tupleQueue.size() > maior) {
-          maior = i.maxTupleQueueSize - i.tupleQueue.size();
+        if(i.maxMipsQueueSize - i.mipsQueueSize > maior) {
+          maior = i.maxMipsQueueSize - i.tupleQueue.size();
           proximo = i;
         }
       }

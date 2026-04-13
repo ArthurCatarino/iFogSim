@@ -11,8 +11,12 @@ import org.fog.application.Application;
 import org.fog.entities.dataEstructures.NetworkMatrix;
 import org.fog.test.perfeval.testes.LogsReport;
 import org.fog.test.perfeval.testes.cluster.Monitoramento;
+import org.fog.test.perfeval.testes.cluster.TipoSensor;
 import org.fog.utils.FogEvents;
 import org.fog.utils.TimeKeeper;
+
+import com.google.common.util.concurrent.Monitor;
+
 import org.cloudbus.cloudsim.Cloudlet;
 import org.cloudbus.cloudsim.Host;
 import org.cloudbus.cloudsim.Storage;
@@ -24,13 +28,15 @@ import org.cloudbus.cloudsim.core.SimEvent;
 import org.cloudbus.cloudsim.power.models.PowerModel;
 
 public class FogDeviceWithQueue extends FogDevice {
-  protected int maxTupleQueueSize;
+  protected long maxMipsQueueSize;
+  protected long mipsQueueSize;
   protected Queue<SimEvent> tupleQueue;
 
-  public FogDeviceWithQueue(String name, long mips, int ram, double uplinkBandwidth, double downlinkBandwidth, double ratePerMips, PowerModel powerModel,int queueSize) throws Exception {
+  public FogDeviceWithQueue(String name, long mips, int ram, double uplinkBandwidth, double downlinkBandwidth, double ratePerMips, PowerModel powerModel,int mipsQueueSize) throws Exception {
     super(name,mips,ram,uplinkBandwidth,downlinkBandwidth,ratePerMips,powerModel);
     tupleQueue = new LinkedList<>();
-    maxTupleQueueSize = queueSize;
+    maxMipsQueueSize = mipsQueueSize;
+    this.mipsQueueSize = 0;
   }
 
   public FogDeviceWithQueue(
@@ -39,10 +45,11 @@ public class FogDeviceWithQueue extends FogDevice {
             VmAllocationPolicy vmAllocationPolicy,
             List<Storage> storageList,
             double schedulingInterval,
-            double uplinkBandwidth, double downlinkBandwidth, double uplinkLatency, double ratePerMips, int queueSize) throws Exception {
+            double uplinkBandwidth, double downlinkBandwidth, double uplinkLatency, double ratePerMips, int mipsQueueSize) throws Exception {
               super(name,characteristics,vmAllocationPolicy,storageList,schedulingInterval,uplinkBandwidth,downlinkBandwidth,uplinkLatency,ratePerMips);
               tupleQueue = new LinkedList<>();
-              maxTupleQueueSize = queueSize;
+              maxMipsQueueSize = mipsQueueSize;
+              this.mipsQueueSize = 0;
             }
 
   @Override
@@ -61,11 +68,13 @@ public class FogDeviceWithQueue extends FogDevice {
 
   protected void updateQueue(SimEvent ev) {
     Tuple tuple = (Tuple) ev.getData(); 
+    TipoSensor tipoRequisicao = TipoSensor.valueOf(tuple.getTupleType());
+
     if(tuple.getLifeTime() > 22) { // Limite de tempo por tupla 25ms
       Monitoramento.addTuplaPerdida();
       return;
     }
-    if(tupleQueue.size() >= maxTupleQueueSize && tuple.getDirection() != Tuple.ACTUATOR) {  
+    if(mipsQueueSize + tipoRequisicao.getMips() <= maxMipsQueueSize && tuple.getDirection() != Tuple.ACTUATOR) {  
       if(this.getLevel() <= 0){ // a nuvem nao tem pra quem redirecionar, ela e o ultimo recurso.
         Monitoramento.addTuplaPerdida();
         return;
@@ -77,7 +86,6 @@ public class FogDeviceWithQueue extends FogDevice {
       if(proximo != null){
         Double delayTotal = calculaDelay(proximo.getId(),tuple);
         Monitoramento.addUsoRede(tuple.getCloudletFileSize());
-        Monitoramento.addTempoMedio(tuple.getActualTupleId(), delayTotal);
         tuple.addLifetime(delayTotal);
         send(proximo.getId(), delayTotal, FogEvents.TUPLE_ARRIVAL, tuple);
       }
@@ -88,6 +96,7 @@ public class FogDeviceWithQueue extends FogDevice {
     }
     else{
       boolean wasEmpty = tupleQueue.isEmpty();
+      mipsQueueSize += tipoRequisicao.getMips();
       tupleQueue.add(ev);
       if(wasEmpty) {
         processTupleArrival();
@@ -97,6 +106,7 @@ public class FogDeviceWithQueue extends FogDevice {
  @Override
   protected void checkCloudletCompletion() {
     boolean cloudletCompleted = false;
+    Tuple tuplaAtual = null;
     List<? extends Host> list = getVmAllocationPolicy().getHostList();
     for (int i = 0; i < list.size(); i++) {
         Host host = list.get(i);
@@ -106,6 +116,9 @@ public class FogDeviceWithQueue extends FogDevice {
                 if (cl != null) {
                   cloudletCompleted = true;
                   Tuple tuple = (Tuple) cl;
+                  tuplaAtual = tuple;
+                  double tempoVidaTotal = CloudSim.clock() - tuple.getEmitTupleTime();
+                  Monitoramento.addTempoMedio(tempoVidaTotal);
                   TimeKeeper.getInstance().tupleEndedExecution(tuple);
                   Application application = getApplicationMap().get(tuple.getAppId());
                   //Logger.debug(getName(), "Completed execution of tuple " + tuple.getCloudletId() + "on " + tuple.getDestModuleName());
@@ -124,6 +137,8 @@ public class FogDeviceWithQueue extends FogDevice {
     if (cloudletCompleted){
       updateAllocatedMips(null);
       tupleQueue.poll();
+      long mipsTupla = TipoSensor.valueOf(tuplaAtual.getTupleType()).getMips();
+      mipsQueueSize -= mipsTupla;
       if(!tupleQueue.isEmpty()){
         processTupleArrival();
       }
@@ -137,6 +152,7 @@ public class FogDeviceWithQueue extends FogDevice {
     
     SimEvent ev = tupleQueue.peek();
     Tuple tuple = (Tuple) ev.getData();
+    long mipsTupla = TipoSensor.valueOf(tuple.getTupleType()).getMips();
     LogsReport.fogsLogs(getName(),tuple.getActualTupleId(),tuple,getLevel());
 
     if (getName().equals("cloud")) {
@@ -147,6 +163,7 @@ public class FogDeviceWithQueue extends FogDevice {
     if (tuple.getDirection() == Tuple.ACTUATOR) {
       sendTupleToActuator(tuple);
       tupleQueue.poll();
+      mipsQueueSize -= mipsTupla;
       processTupleArrival();
       return;
     }
@@ -179,6 +196,7 @@ public class FogDeviceWithQueue extends FogDevice {
               tuple.getModuleCopyMap().get(tuple.getDestModuleName()) != vmId)) {
           
               tupleQueue.poll();
+              mipsQueueSize -= mipsTupla;
               processTupleArrival();
               return;
             }
@@ -196,6 +214,7 @@ public class FogDeviceWithQueue extends FogDevice {
               sendDown(tuple, childId);
             }
             tupleQueue.poll();
+            mipsQueueSize -= mipsTupla;
             processTupleArrival();
         } else {
             if (tuple.getDirection() == Tuple.UP)
@@ -205,6 +224,7 @@ public class FogDeviceWithQueue extends FogDevice {
                 sendDown(tuple, childId);
             }
           tupleQueue.poll();
+          mipsQueueSize -= mipsTupla;
           processTupleArrival();
         }
     }
