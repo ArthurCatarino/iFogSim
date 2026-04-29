@@ -11,11 +11,9 @@ import org.fog.application.Application;
 import org.fog.entities.dataEstructures.NetworkMatrix;
 import org.fog.test.perfeval.testes.LogsReport;
 import org.fog.test.perfeval.testes.cluster.Monitoramento;
-import org.fog.test.perfeval.testes.cluster.TipoSensor;
+import org.fog.test.perfeval.testes.TipoSensor;
 import org.fog.utils.FogEvents;
 import org.fog.utils.TimeKeeper;
-
-import com.google.common.util.concurrent.Monitor;
 
 import org.cloudbus.cloudsim.Cloudlet;
 import org.cloudbus.cloudsim.Host;
@@ -70,13 +68,15 @@ public class FogDeviceWithQueue extends FogDevice {
     Tuple tuple = (Tuple) ev.getData(); 
     TipoSensor tipoRequisicao = TipoSensor.valueOf(tuple.getTupleType());
 
-    if(tuple.getLifeTime() > 22) { // Limite de tempo por tupla 25ms
+    if(tuple.getLifeTime() > 50) { // Limite de tempo por tupla
       Monitoramento.addTuplaPerdida();
+      Monitoramento.addTempoMedio(tuple.getCloudletId(),CloudSim.clock() - tuple.getEmitTupleTime());
       return;
     }
-    if(mipsQueueSize + tipoRequisicao.getMips() <= maxMipsQueueSize && tuple.getDirection() != Tuple.ACTUATOR) {  
+    if(mipsQueueSize + tipoRequisicao.getMips() > maxMipsQueueSize && tuple.getDirection() != Tuple.ACTUATOR) {  
       if(this.getLevel() <= 0){ // a nuvem nao tem pra quem redirecionar, ela e o ultimo recurso.
         Monitoramento.addTuplaPerdida();
+        Monitoramento.addTempoMedio(tuple.getCloudletId(),CloudSim.clock() - tuple.getEmitTupleTime());
         return;
       }
 
@@ -118,7 +118,7 @@ public class FogDeviceWithQueue extends FogDevice {
                   Tuple tuple = (Tuple) cl;
                   tuplaAtual = tuple;
                   double tempoVidaTotal = CloudSim.clock() - tuple.getEmitTupleTime();
-                  Monitoramento.addTempoMedio(tempoVidaTotal);
+                  Monitoramento.addTempoMedio(tuple.getCloudletId(),tempoVidaTotal);
                   TimeKeeper.getInstance().tupleEndedExecution(tuple);
                   Application application = getApplicationMap().get(tuple.getAppId());
                   //Logger.debug(getName(), "Completed execution of tuple " + tuple.getCloudletId() + "on " + tuple.getDestModuleName());
@@ -153,7 +153,7 @@ public class FogDeviceWithQueue extends FogDevice {
     SimEvent ev = tupleQueue.peek();
     Tuple tuple = (Tuple) ev.getData();
     long mipsTupla = TipoSensor.valueOf(tuple.getTupleType()).getMips();
-    LogsReport.fogsLogs(getName(),tuple.getActualTupleId(),tuple,getLevel());
+    LogsReport.fogsLogs(getName(),tuple.getCloudletId(),tuple,getLevel());
 
     if (getName().equals("cloud")) {
       updateCloudTraffic();

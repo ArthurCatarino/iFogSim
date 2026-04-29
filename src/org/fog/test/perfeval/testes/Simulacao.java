@@ -92,8 +92,8 @@ private static void criaSensorNoFog(FogNode pai, int idSensor) {
       // System.out.println("Link P2P: " + d1.getName() + " <--> " + d2.getName());
     }
     distribuirSensores(nos); //Gera e atribui os sensores
-    //Conectar os nos a nuvem
-    conectarNosProximosNuvem(nos,links,nuvem);
+
+    conectarNosProximosNuvem(nos,links,nuvem); //Conecta os nos a nuvem
   }
   
   private static ModuleMapping criaMapeamento() {
@@ -153,8 +153,9 @@ private static void conectarNosProximosNuvem(List<FogNode> nos,List<FogLink> lin
 
     for (int i = 0; i < limite; i++) {
         FogNode selecionado = distancias.get(i).node;  
+        selecionado.device.addPais(nuvem.device);
         NetworkMatrix.addLatency(selecionado.device.getId(), nuvem.device.getId(), distancias.get(i).distance,bandaMedia);
-        System.out.println("Nó " + selecionado.id + " conectado à Nuvem (Top " + porcentagemConectadaANuvem + "%)");
+        //System.out.println("Nó " + selecionado.id + " conectado à Nuvem (Top " + porcentagemConectadaANuvem + "%)");
     }
 }
 

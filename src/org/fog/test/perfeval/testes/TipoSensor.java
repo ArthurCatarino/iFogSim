@@ -4,8 +4,9 @@ import java.util.Random;
 
 public enum TipoSensor {
     
-    SENSOR_A("SENSOR_A", 15, 150, 140),     // Alta freq, Leve
-    SENSOR_B("SENSOR_B", 60, 1200, 550); // Baixa freq, Pesado
+    SENSOR_A("SENSOR_A", 30,  5000, 150),
+    SENSOR_B("SENSOR_B", 30, 10000, 300),
+    SENSOR_C("SENSOR_B", 30, 200000, 600);
 
     private String tupleType;
     private int frequenciaMs;

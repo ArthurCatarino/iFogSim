@@ -42,25 +42,30 @@ public class LogicaSimulacao {
   }
 
   private void defineConexoes(Application app) {
-    app.addAppEdge("TUPLA","Process",140,150,"TUPLA",Tuple.UP,AppEdge.SENSOR);
+    for(TipoSensor tipo : TipoSensor.values()) {
+      app.addAppEdge(tipo.getTupleType(),"Process",tipo.getMips(),tipo.getTamanhoBytes(),tipo.getTupleType(),Tuple.UP,AppEdge.SENSOR);
+    }
   }
+  
 
   private void mapeamentoDeTuplas(Application app) {
+    for (TipoSensor tipo : TipoSensor.values()) {
         // Mapeia a entrada (SENSOR_A) para uma saída fictícia (TUPLA_FANTASMA)
         // Isso força a criação e execução do Cloudlet
-        app.addTupleMapping("Process", "TUPLA", "TUPLA_FANTASMA", new FractionalSelectivity(1.0));
+        app.addTupleMapping("Process", tipo.getTupleType(), "TUPLA_FANTASMA", new FractionalSelectivity(1.0));
+    }
   }
 
    private void adicionaLoop(Application app) {
     List<AppLoop> loops = new ArrayList<>();
-    final AppLoop loop = new AppLoop(
-      new ArrayList<String>(){{
-            add("TUPLA"); 
+    
+    for (TipoSensor tipo : TipoSensor.values()) {
+        final AppLoop loop = new AppLoop(new ArrayList<String>(){{
+            add(tipo.getTupleType()); // 
             add("Process");
-              }});
-
-    loops.add(loop);
+        }});
+        loops.add(loop);
+    }
     app.setLoops(loops);
-
-   }
+  }
 }

@@ -7,6 +7,7 @@ import org.fog.test.perfeval.testes.cluster.Monitoramento;
 import org.fog.utils.FogEvents;
 import org.cloudbus.cloudsim.Storage;
 import org.cloudbus.cloudsim.VmAllocationPolicy;
+import org.cloudbus.cloudsim.core.CloudSim;
 import org.cloudbus.cloudsim.power.models.PowerModel;
 
 public class FogDeviceWQLessLatency extends FogDeviceWithQueue {
@@ -47,7 +48,7 @@ public class FogDeviceWQLessLatency extends FogDeviceWithQueue {
     double delay;
     for(FogDeviceWQLessLatency i : lista){
       delay = super.calculaDelay(i.getId(), tuple);
-      if((menor > delay) && (i.tupleQueue.size() != i.maxTupleQueueSize)) {
+      if((menor > delay) && ((i.maxMipsQueueSize - i.mipsQueueSize) > tuple.getCloudletLength() )) {
         if(i.getId() == tuple.getSourceDeviceId()) {continue;}
         menor = delay;
         proximo = i;
@@ -60,17 +61,12 @@ public class FogDeviceWQLessLatency extends FogDeviceWithQueue {
       FogDeviceWQLessLatency proximo = calculaProximo(tuple,pais);
       Double delay;
       if(proximo == null) {
-        int idPai = this.getParentId();
-        delay = super.calculaDelay(idPai, tuple);
-        Monitoramento.addUsoRede(tuple.getCloudletFileSize());
-        Monitoramento.addTempoMedio(tuple.getActualTupleId(), delay);
-        tuple.addLifetime(delay);
-        send(idPai,delay,FogEvents.TUPLE_ARRIVAL,tuple);
+        Monitoramento.addTuplaPerdida();
+        Monitoramento.addTempoMedio(tuple.getCloudletId(),CloudSim.clock() - tuple.getEmitTupleTime());
       }
       else {
         delay = super.calculaDelay(proximo.getId(), tuple);
         Monitoramento.addUsoRede(tuple.getCloudletFileSize());
-        Monitoramento.addTempoMedio(tuple.getActualTupleId(), delay);
         tuple.addLifetime(delay);
         send(proximo.getId(),delay,FogEvents.TUPLE_ARRIVAL,tuple);
       }

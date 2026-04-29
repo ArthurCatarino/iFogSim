@@ -116,14 +116,13 @@ public class FogDeviceWQHybrid extends FogDeviceWithQueue {
       Double delay = super.calculaDelay(idPai,tuple);
       
       Monitoramento.addUsoRede(tuple.getCloudletFileSize());
-      Monitoramento.addTempoMedio(tuple.getActualTupleId(), delay);
+      Monitoramento.addTempoMedio(tuple.getCloudletId(), delay);
       tuple.addLifetime(delay);
       send(idPai,delay,FogEvents.TUPLE_ARRIVAL,tuple);
     }
     else {
       Double delay = super.calculaDelay(proximo.getId(),tuple);
       Monitoramento.addUsoRede(tuple.getCloudletFileSize());
-      Monitoramento.addTempoMedio(tuple.getActualTupleId(), delay);
       tuple.addLifetime(delay);
       send(proximo.getId(),delay,FogEvents.TUPLE_ARRIVAL,tuple);
     }

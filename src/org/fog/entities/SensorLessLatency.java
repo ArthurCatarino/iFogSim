@@ -19,7 +19,7 @@ public class SensorLessLatency extends Sensor {
     Double menor = Double.MAX_VALUE;
       for(FogDeviceWQLessLatency i : destinos){
         Double delay = super.calculaDelay(i.getId(),tuple);
-        if((delay < menor) && (i.tupleQueue.size() < i.maxTupleQueueSize)) {
+        if((delay < menor) && ((i.maxMipsQueueSize - i.mipsQueueSize) > tuple.getCloudletLength() )) {
           menor = delay;
           proximo = i;
         }
