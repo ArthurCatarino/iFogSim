@@ -7,13 +7,13 @@ public class NetworkMatrix {
 
   private static HashMap<Integer,HashMap<Integer,Double>> banda = new HashMap<>(); // Mapeia a banda de rede de um fog a os seus vizinhos, sensores tem o id negativo.
 
-  public static void addLatency(Integer source, Integer dest,Double latency) {
+  public static void addLatency(Integer source, Integer dest,Double latency,Double band) {
 
     latencia.computeIfAbsent(source, k -> new HashMap<>()).put(dest, latency);
     latencia.computeIfAbsent(dest, k -> new HashMap<>()).put(source, latency);
 
     // Passa o valor sorteado direto para evitar recriar objetos se não precisar
-    addBand(source, dest, TipoConexao.sortear());
+    addBand(source, dest, band);
 }
 
 private static void addBand(Integer source, Integer dest, Double band) {

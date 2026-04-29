@@ -1,6 +1,6 @@
 package org.fog.entities;
 
-import org.fog.test.perfeval.testes.cluster.TipoSensor;
+import org.fog.test.perfeval.testes.TipoSensor;
 import org.fog.utils.distribution.Distribution;
 import java.util.ArrayList;
 

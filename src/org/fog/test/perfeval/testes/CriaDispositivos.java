@@ -1,3 +1,4 @@
+
 package org.fog.test.perfeval.testes;
 
 import java.util.ArrayList;
@@ -33,7 +34,6 @@ import org.fog.scheduler.StreamOperatorScheduler;
 import org.fog.utils.FogLinearPowerModel;
 import org.fog.utils.FogUtils;
 import org.fog.utils.distribution.DeterministicDistribution;
-import org.fog.test.perfeval.testes.cluster.TipoSensor;
 
 
 public class CriaDispositivos {
@@ -106,9 +106,6 @@ public class CriaDispositivos {
 
     public FogDeviceWQLessLatency createFogDeviceWQLessLatency(String name, int mips, int ram, int upBw, int downBw, int level,double ratePerMips, double busyPower, double idlePower,String pai,int latencia,int queueSize) {
     FogDeviceWQLessLatency edge = FogDeviceWQLessLatency(name,mips,ram,upBw,downBw,level,ratePerMips,busyPower,idlePower,queueSize);
-
-    
-
     if(pai == null) { // O fog nao necessariamente e obrigado a ter um pai.
       edge.setParentId(-1);
     }
@@ -126,6 +123,7 @@ public class CriaDispositivos {
       edge.setUplinkLatency(latencia); // latência até o pai
     }
     fogDevices.add(edge);
+    System.out.println("O fog " + name + " foi adicionado no mapa");
     idByName.put(name, edge.getId());
 
     return edge;
@@ -133,9 +131,6 @@ public class CriaDispositivos {
 
   public FogDeviceWQHybrid createFogDeviceWQHybrid(String name, int mips, int ram, int upBw, int downBw, int level,double ratePerMips, double busyPower, double idlePower,String pai,int latencia,int queueSize) {
     FogDeviceWQHybrid edge = FogDeviceWQHybrid(name,mips,ram,upBw,downBw,level,ratePerMips,busyPower,idlePower,queueSize);
-
-    
-
     if(pai == null) { // O fog nao necessariamente e obrigado a ter um pai.
       edge.setParentId(-1);
     }
@@ -158,7 +153,7 @@ public class CriaDispositivos {
     return edge;
   }
 
-   public void createSensor(String name, String tupleType, int frequenciaDeEnvio, String idPai, double latencia) {
+  public void createSensor(String name, String tupleType, int frequenciaDeEnvio, String idPai, double latencia) {
     Sensor sensor = new Sensor(name, tupleType, brokerId, appId,
     new DeterministicDistribution(frequenciaDeEnvio)); // Define a frequencia a qual o sensor enviara dados
     sensor.setGatewayDeviceId(idByName.get(idPai)); // Define um fog como seu pai
@@ -168,20 +163,9 @@ public class CriaDispositivos {
     CloudSim.addEntity(sensor);
   }
   
-  public SensorLessSlack createSensorLessSlack(String name, String tupleType, int frequenciaDeEnvio, String idPai, double latencia) {
-    SensorLessSlack sensor = new SensorLessSlack(name, tupleType, brokerId, appId,
-    new DeterministicDistribution(frequenciaDeEnvio),tipos); // Define a frequencia a qual o sensor enviara dados
-    sensor.setGatewayDeviceId(idByName.get(idPai)); // Define um fog como seu pai
-    sensor.setLatency(latencia);
-    NetworkTopology.addLink(sensor.getId(), idByName.get(idPai), 100.0, latencia);
-    sensors.add(sensor);
-    CloudSim.addEntity(sensor);
-    return sensor;
-  }
-
-    public SensorLessLatency createSensorLessLatency(String name, String tupleType, int frequenciaDeEnvio, String idPai, double latencia) {
+  public SensorLessLatency createSensorLessLatency(String name, String tupleType, int frequenciaDeEnvio, String idPai, double latencia) {
     SensorLessLatency sensor = new SensorLessLatency(name, tupleType, brokerId, appId,
-    new DeterministicDistribution(frequenciaDeEnvio)); // Define a frequencia a qual o sensor enviara dados
+    new DeterministicDistribution(frequenciaDeEnvio),tipos); // Define a frequencia a qual o sensor enviara dados
     sensor.setGatewayDeviceId(idByName.get(idPai)); // Define um fog como seu pai
     sensor.setLatency(latencia);
     NetworkTopology.addLink(sensor.getId(), idByName.get(idPai), 100.0, latencia);

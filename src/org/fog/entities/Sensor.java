@@ -11,11 +11,10 @@ import org.fog.application.AppEdge;
 import org.fog.application.AppLoop;
 import org.fog.application.Application;
 import org.fog.entities.dataEstructures.NetworkMatrix;
-import org.fog.test.perfeval.testes.LogsReport;
 import org.fog.utils.*;
 import org.fog.utils.distribution.Distribution;
 import org.fog.test.perfeval.testes.cluster.Monitoramento;
-import org.fog.test.perfeval.testes.cluster.TipoSensor;
+import org.fog.test.perfeval.testes.TipoSensor;
 
 public class Sensor extends SimEntity{
 	

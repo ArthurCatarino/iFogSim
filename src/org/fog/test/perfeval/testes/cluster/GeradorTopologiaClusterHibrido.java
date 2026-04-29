@@ -17,6 +17,7 @@ import org.fog.placement.Controller;
 import org.fog.placement.ModuleMapping;
 import org.fog.placement.ModulePlacementMapping;
 import org.fog.test.perfeval.testes.CriaDispositivos;
+import org.fog.test.perfeval.testes.TipoSensor;
 import org.fog.entities.dataEstructures.NetworkMatrix;
 
 public class GeradorTopologiaClusterHibrido {

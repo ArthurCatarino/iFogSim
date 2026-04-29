@@ -1,4 +1,4 @@
-package org.fog.test.perfeval.testes.cluster;
+package org.fog.test.perfeval.testes;
 
 import org.fog.application.AppEdge;
 import org.fog.application.AppLoop;
@@ -8,12 +8,12 @@ import org.fog.test.perfeval.testes.TipoSensor;
 import org.fog.entities.*;
 import java.util.*;
 
-public class LogicaCluster {
+public class LogicaSimulacao {
   
   private String appId;
   private int brokerID;
 
-  public LogicaCluster(String appId, int brokerID) {
+  public LogicaSimulacao(String appId, int brokerID) {
     this.appId = appId;
     this.brokerID = brokerID;
   }
@@ -42,29 +42,25 @@ public class LogicaCluster {
   }
 
   private void defineConexoes(Application app) {
-    for(TipoSensor tipo : TipoSensor.values()) {
-      app.addAppEdge(tipo.getTupleType(),"Process",tipo.getMips(),tipo.getTamanhoBytes(),tipo.getTupleType(),Tuple.UP,AppEdge.SENSOR);
-    }
+    app.addAppEdge("TUPLA","Process",140,150,"TUPLA",Tuple.UP,AppEdge.SENSOR);
   }
 
   private void mapeamentoDeTuplas(Application app) {
-for (TipoSensor tipo : TipoSensor.values()) {
         // Mapeia a entrada (SENSOR_A) para uma saída fictícia (TUPLA_FANTASMA)
         // Isso força a criação e execução do Cloudlet
-        app.addTupleMapping("Process", tipo.getTupleType(), "TUPLA_FANTASMA", new FractionalSelectivity(1.0));
-    }
+        app.addTupleMapping("Process", "TUPLA", "TUPLA_FANTASMA", new FractionalSelectivity(1.0));
   }
 
    private void adicionaLoop(Application app) {
     List<AppLoop> loops = new ArrayList<>();
-    
-    for (TipoSensor tipo : TipoSensor.values()) {
-        final AppLoop loop = new AppLoop(new ArrayList<String>(){{
-            add(tipo.getTupleType()); // 
+    final AppLoop loop = new AppLoop(
+      new ArrayList<String>(){{
+            add("TUPLA"); 
             add("Process");
-        }});
-        loops.add(loop);
-    }
+              }});
+
+    loops.add(loop);
     app.setLoops(loops);
-  }
+
+   }
 }

@@ -19,6 +19,7 @@ import org.fog.placement.Controller;
 import org.fog.placement.ModuleMapping;
 import org.fog.placement.ModulePlacementMapping;
 import org.fog.test.perfeval.testes.CriaDispositivos;
+import org.fog.test.perfeval.testes.TipoSensor;
 import org.fog.entities.dataEstructures.NetworkMatrix;
 
 public class GeradorTopologiaClusterLessSlack {
@@ -115,9 +116,6 @@ public class GeradorTopologiaClusterLessSlack {
                     50, 
                     filaLider
                 );
-                NetworkMatrix.addLatency(fogLider.getId(), cloudLocation.device.getId(),centro.distancia(cloudLocation.p));
-
-                
 
                 // B. CRIAR DISPOSITIVOS WORKERS (Conectados ao Líder)
                 for (int i = 0; i < NUM_DISPOSITIVOS_POR_CLUSTER; i++) {
@@ -151,7 +149,7 @@ public class GeradorTopologiaClusterLessSlack {
                     //Sorteio o tipo do sensor
                     TipoSensor tipoSorteado = TipoSensor.sortear();
 
-                    // Cria sensor (Atenção: verifique os parametros do seu createSensor)
+                    // Cria sensor
                     SensorLessSlack sensor = deviceFactory.createSensorLessSlack(nomeSensor, tipoSorteado.getTupleType(),tipoSorteado.getFrequenciaMs(),gateway.device.getName(),2.0);
                     NetworkMatrix.addLatency(-1*sensor.getId(),gateway.device.getId(),posSensor.distancia(gateway.p));
                     

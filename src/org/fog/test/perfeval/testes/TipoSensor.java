@@ -1,4 +1,4 @@
-package org.fog.test.perfeval.testes.cluster;
+package org.fog.test.perfeval.testes;
 
 import java.util.Random;
 
@@ -26,6 +26,14 @@ public enum TipoSensor {
     public static TipoSensor sortear() {
         TipoSensor[] sensores = values();
         return sensores[RANDOM.nextInt(sensores.length)];
+    }
+
+    public static double mediaBanda() {
+        double soma = 0;
+        for(TipoSensor ts : TipoSensor.values()){
+            soma += ts.getTamanhoBytes();
+        }
+        return soma/TipoSensor.values().length;
     }
 
     // Getters
