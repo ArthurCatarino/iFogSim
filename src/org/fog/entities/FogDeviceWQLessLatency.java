@@ -1,22 +1,16 @@
 package org.fog.entities;
 
-import java.util.ArrayList;
 import java.util.List;
 
-import org.fog.test.perfeval.testes.cluster.Monitoramento;
-import org.fog.utils.FogEvents;
+import org.fog.test.perfeval.testes.TiposDispositivos;
 import org.cloudbus.cloudsim.Storage;
 import org.cloudbus.cloudsim.VmAllocationPolicy;
-import org.cloudbus.cloudsim.core.CloudSim;
 import org.cloudbus.cloudsim.power.models.PowerModel;
 
 public class FogDeviceWQLessLatency extends FogDeviceWithQueue {
 
-  private ArrayList<FogDeviceWQLessLatency> vizinhos = new ArrayList<>();
-  private ArrayList<FogDeviceWQLessLatency> pais = new ArrayList<>();
-
-  public FogDeviceWQLessLatency(String name, long mips, int ram, double uplinkBandwidth, double downlinkBandwidth, double ratePerMips, PowerModel powerModel,int queueSize) throws Exception {
-    super(name,mips,ram,uplinkBandwidth,downlinkBandwidth,ratePerMips,powerModel,queueSize);
+  public FogDeviceWQLessLatency(String name, long mips, int ram, double uplinkBandwidth, double downlinkBandwidth, double ratePerMips, PowerModel powerModel,int queueSize,TiposDispositivos nodeType) throws Exception {
+    super(name,mips,ram,uplinkBandwidth,downlinkBandwidth,ratePerMips,powerModel,queueSize,nodeType);
   }
 
   public FogDeviceWQLessLatency(
@@ -25,28 +19,18 @@ public class FogDeviceWQLessLatency extends FogDeviceWithQueue {
           VmAllocationPolicy vmAllocationPolicy,
           List<Storage> storageList,
           double schedulingInterval,
-          double uplinkBandwidth, double downlinkBandwidth, double uplinkLatency, double ratePerMips, int queueSize) throws Exception {
-              super(name,characteristics,vmAllocationPolicy,storageList,schedulingInterval,uplinkBandwidth,downlinkBandwidth,uplinkLatency,ratePerMips,queueSize);
+          double uplinkBandwidth, double downlinkBandwidth, double uplinkLatency, double ratePerMips, int queueSize,TiposDispositivos nodeType) throws Exception {
+              super(name,characteristics,vmAllocationPolicy,storageList,schedulingInterval,uplinkBandwidth,downlinkBandwidth,uplinkLatency,ratePerMips,queueSize,nodeType);
 
             }
 
-  public void addPais(FogDeviceWQLessLatency device) {
-    pais.add(device);
-  }
-  
-  public void addNeighbor(FogDeviceWQLessLatency device) {
-    vizinhos.add(device);
-  }
-
-  public FogDeviceWQLessLatency calculaProximo(Tuple tuple) {
-    return this.calculaProximo(tuple,vizinhos);
-  }
-
-  public FogDeviceWQLessLatency calculaProximo(Tuple tuple,ArrayList<FogDeviceWQLessLatency> lista ) {
+  @Override
+  public FogDeviceWithQueue calculaProximo(Tuple tuple) {
     Double menor = Double.MAX_VALUE;
-    FogDeviceWQLessLatency proximo = null;
+    FogDeviceWithQueue proximo = null;
     double delay;
-    for(FogDeviceWQLessLatency i : lista){
+    for(FogDeviceWithQueue i : vizinhos){
+      if(i.maxMipsQueueSize - i.mipsQueueSize < tuple.getCloudletLength()) {continue;} //Se o vizinho não tiver capacidade pra processar nem olha pra ele
       delay = super.calculaDelay(i.getId(), tuple);
       if((menor > delay) && ((i.maxMipsQueueSize - i.mipsQueueSize) > tuple.getCloudletLength() )) {
         if(i.getId() == tuple.getSourceDeviceId()) {continue;}
@@ -57,19 +41,4 @@ public class FogDeviceWQLessLatency extends FogDeviceWithQueue {
     return proximo;
   }
 
-  protected void sendUp(Tuple tuple) {
-      FogDeviceWQLessLatency proximo = calculaProximo(tuple,pais);
-      Double delay;
-      if(proximo == null) {
-        Monitoramento.addTuplaPerdida();
-        Monitoramento.addTempoMedio(tuple.getCloudletId(),CloudSim.clock() - tuple.getEmitTupleTime());
-      }
-      else {
-        delay = super.calculaDelay(proximo.getId(), tuple);
-        Monitoramento.addUsoRede(tuple.getCloudletFileSize());
-        tuple.addLifetime(delay);
-        send(proximo.getId(),delay,FogEvents.TUPLE_ARRIVAL,tuple);
-      }
-    
-  }
 }

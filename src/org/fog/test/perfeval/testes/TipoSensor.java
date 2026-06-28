@@ -4,16 +4,15 @@ import java.util.Random;
 
 public enum TipoSensor {
     
-    SENSOR_A("SENSOR_A", 30,  5000, 150),
-    SENSOR_B("SENSOR_B", 30, 10000, 300),
-    SENSOR_C("SENSOR_B", 30, 200000, 600);
+    SENSOR_A("SENSOR_A", 10,  5500, 500),
+    SENSOR_B("SENSOR_B", 10, 11000, 900),
+    SENSOR_C("SENSOR_C", 10, 220000, 1800);
 
     private String tupleType;
     private int frequenciaMs;
     private long tamanhoBytes;
     private long mips; // Quanto de CPU gasta para processar
 
-    // Construtor do Enum
     TipoSensor(String tupleType, int frequenciaMs, long tamanhoBytes, long mips) {
         this.tupleType = tupleType;
         this.frequenciaMs = frequenciaMs;
@@ -21,8 +20,7 @@ public enum TipoSensor {
         this.mips = mips;
     }
 
-    // Método Utilitário para sortear aleatoriamente
-    private static final Random RANDOM = new Random();
+    private static final Random RANDOM = new Random(18);
     
     public static TipoSensor sortear() {
         TipoSensor[] sensores = values();

@@ -15,6 +15,7 @@ import org.fog.utils.*;
 import org.fog.utils.distribution.Distribution;
 import org.fog.test.perfeval.testes.cluster.Monitoramento;
 import org.fog.test.perfeval.testes.TipoSensor;
+import org.fog.test.perfeval.testes.TiposDispositivos;
 
 public class Sensor extends SimEntity{
 	
@@ -31,6 +32,7 @@ public class Sensor extends SimEntity{
 	private Application app;
 	private double latency;
 	private ArrayList<TipoSensor> tupleOptions;
+	private static Random gerador = new Random(18);
 
 	private int transmissionStartDelay = Config.TRANSMISSION_START_DELAY;
 	
@@ -90,8 +92,8 @@ public class Sensor extends SimEntity{
 	}
 	
 	public void transmit(){
-		//Gera uma tupla de um de seus tipos pre-definidos
-		Random gerador = new Random();
+		//Gera uma tupla de um dos tipos pre-definidos
+		
 		int sorteio = gerador.nextInt(tupleOptions.size());
 
 		long cpuLength = (long) tupleOptions.get(sorteio).getMips();

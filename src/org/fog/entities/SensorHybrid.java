@@ -1,6 +1,6 @@
 package org.fog.entities;
 
-import org.fog.test.perfeval.testes.cluster.TipoSensor;
+import org.fog.test.perfeval.testes.TipoSensor;
 import org.fog.utils.distribution.Distribution;
 import java.util.ArrayList;
 
@@ -8,7 +8,7 @@ public class SensorHybrid extends Sensor {
 
   private ArrayList<FogDeviceWQHybrid> destinos;
   private Double maiorDelay, menorDelay;
-  private int maiorFolga, menorFolga;
+  private long maiorFolga, menorFolga;
   
   public SensorHybrid(String name, String tupleType, int userId, String appId, Distribution transmitDistribution,ArrayList<TipoSensor> tipos) {
         super(name,tupleType,userId,appId,transmitDistribution,tipos);
@@ -22,16 +22,16 @@ public class SensorHybrid extends Sensor {
   private boolean calculaParametros(Tuple tuple) {
     maiorDelay = Double.MIN_VALUE;
     menorDelay = Double.MAX_VALUE;
-    maiorFolga = Integer.MIN_VALUE;
-    menorFolga = Integer.MAX_VALUE;
+    maiorFolga = Long.MIN_VALUE;
+    menorFolga = Long.MAX_VALUE;
 
-    int folga;
+    long folga;
     Double delay;
     boolean encontrou = false;
     for(FogDeviceWQHybrid i : destinos) {
-      folga = i.maxTupleQueueSize - i.tupleQueue.size();
+      folga = i.maxMipsQueueSize - i.mipsQueueSize;
       delay = super.calculaDelay(i.getId(), tuple);
-      if(i.tupleQueue.size() < i.maxTupleQueueSize) { //Se o candidato estiver cheio nem precisa olhar
+      if(i.mipsQueueSize + tuple.getCloudletLength() < i.maxMipsQueueSize) { //Se o candidato estiver cheio nem precisa olhar
         if(folga > maiorFolga) {
           maiorFolga = folga;
         }
@@ -56,7 +56,7 @@ public class SensorHybrid extends Sensor {
       return -1;
     }
 
-    int folga;
+    long folga;
     Double Delay,score,folgaNormalizada, DelayNormalizada;
     double minMaxFolga = maiorFolga - menorFolga;
     Double minMaxDelay = maiorDelay - menorDelay;
@@ -67,8 +67,8 @@ public class SensorHybrid extends Sensor {
       if (minMaxDelay <= 0.00001) minMaxDelay = 1.0; // Evita NaN se todas as latências forem iguais
 
     for(FogDeviceWQHybrid i : destinos) {
-      if(i.tupleQueue.size() < i.maxTupleQueueSize) {
-        folga = i.maxTupleQueueSize - i.tupleQueue.size();
+      if(i.mipsQueueSize + tuple.getCloudletLength() < i.maxMipsQueueSize) {
+        folga = i.maxMipsQueueSize - i.mipsQueueSize;
         Delay = super.calculaDelay(i.getId(), tuple);
         folgaNormalizada = (folga - menorFolga)/minMaxFolga;
         DelayNormalizada = (maiorDelay - Delay)/minMaxDelay;

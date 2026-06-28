@@ -9,7 +9,7 @@ import org.w3c.dom.Element;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import org.fog.entities.FogDeviceWQLessLatency;
+import org.fog.entities.FogDeviceWQHybrid;
 
 import java.util.Random;
 
@@ -19,9 +19,9 @@ public class ExtraiTopologia {
         public String id;
         public double x;
         public double y;
-        public FogDeviceWQLessLatency device;
+        public FogDeviceWQHybrid device;
 
-        public FogNode(String id, double x, double y, FogDeviceWQLessLatency device) {
+        public FogNode(String id, double x, double y, FogDeviceWQHybrid device) {
             this.id = id;
             this.x = x;
             this.y = y;
@@ -49,9 +49,14 @@ public class ExtraiTopologia {
 
     private List<FogNode> nodes = new ArrayList<>();
     private List<FogLink> links = new ArrayList<>();
+    private Random geradorAleatorio;
+
+    public ExtraiTopologia(Random r){
+        geradorAleatorio = r;
+    }
 
     private TiposDispositivos sorteador(){
-        Random geradorAleatorio = new Random();
+
         int sorteio = geradorAleatorio.nextInt(100);
 
         if(sorteio < 20){
@@ -64,67 +69,111 @@ public class ExtraiTopologia {
         return TiposDispositivos.RaspberryPi4;
     }
 
-    public void carregarTopologiaXML(String caminhoArquivo,CriaDispositivos deviceFactory) {
+public void carregarTopologiaXML(String caminhoArquivo, CriaDispositivos deviceFactory) {
         try {
-            int yMedio = 0;
-            int xMedio = 0;
-            FogDeviceWQLessLatency cloud = deviceFactory.createFogDeviceWQLessLatency("cloud", 100000 , 20, 10000, 10000, 0, 0.0005, 150,50,null,0,100000);
+            double yMedio = 0;
+            double xMedio = 0;
+            
+            // Criar a Nuvem inicial
+            FogDeviceWQHybrid cloud = deviceFactory.createFogDeviceWQHybrid("cloud", 100000, 20, 10000, 10000, 0, 0.0005, 150, 50, null, 0, 100000, null);
+            
             File inputFile = new File(caminhoArquivo);
             DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
             Document doc = dBuilder.parse(inputFile);
             doc.getDocumentElement().normalize();
 
-            // Extraindo os Nós
+            // --- 1. EXTRAÇÃO DOS NÓS (GraphML) ---
             NodeList nList = doc.getElementsByTagName("node");
             for (int temp = 0; temp < nList.getLength(); temp++) {
                 Node nNode = nList.item(temp);
                 if (nNode.getNodeType() == Node.ELEMENT_NODE) {
                     Element eElement = (Element) nNode;
                     
-                    String id = eElement.getAttribute("id");
-                    double x = Double.parseDouble(eElement.getElementsByTagName("x").item(0).getTextContent());
+                    // Limpa o ID
+                    String idRaw = eElement.getAttribute("id");
+                    String idLimpo = idRaw.replaceAll("\\D+", ""); 
+
+                    int idNumerico = Integer.parseInt(idLimpo) + 1;
+                    String idFinal = String.valueOf(idNumerico);
+                    
+                    double x = 0; // Longitude
+                    double y = 0; // Latitude
+
+                    // No GraphML, as coordenadas estão em tags <data> com keys específicas
+                    NodeList dataTags = eElement.getElementsByTagName("data");
+                    for (int j = 0; j < dataTags.getLength(); j++) {
+                        Element dataElem = (Element) dataTags.item(j);
+                        String key = dataElem.getAttribute("key");
+                        
+                        if (key.equals("d32")) { // d32 = Longitude (eixo X)
+                            x = Double.parseDouble(dataElem.getTextContent());
+                        } else if (key.equals("d29")) { // d29 = Latitude (eixo Y)
+                            y = Double.parseDouble(dataElem.getTextContent());
+                        }
+                    }
+
                     xMedio += x;
-                    double y = Double.parseDouble(eElement.getElementsByTagName("y").item(0).getTextContent());
                     yMedio += y;
             
                     TiposDispositivos tipoSorteado = sorteador();
 
-                    //Aqui e decidido o tipo de no Fog usado
-                    FogDeviceWQLessLatency novoFog = deviceFactory.createFogDeviceWQLessLatency(tipoSorteado.getNome()+"_"+id,tipoSorteado.getMips(),tipoSorteado.getRam(),tipoSorteado.getUpBw(),tipoSorteado.getDownBw(),1,tipoSorteado.getRatePerMips(),tipoSorteado.getBusyPower(),tipoSorteado.getIdlePower(),"cloud",5,tipoSorteado.getQueueSize());
+                    // Criar o nó Fog
+                    FogDeviceWQHybrid novoFog = deviceFactory.createFogDeviceWQHybrid(
+                        tipoSorteado.getNome() + "_" + idFinal,
+                        tipoSorteado.getMips(), tipoSorteado.getRam(),
+                        tipoSorteado.getUpBw(), tipoSorteado.getDownBw(),
+                        1, tipoSorteado.getRatePerMips(),
+                        tipoSorteado.getBusyPower(), tipoSorteado.getIdlePower(),
+                        "cloud", 5, tipoSorteado.getQueueSize(),
+                        tipoSorteado
+                    );
                     
-                    nodes.add(new FogNode(id, x, y,novoFog));
+                    nodes.add(new FogNode(idFinal, x, y, novoFog));
                 }
             }
-            nodes.add(new FogNode("0",xMedio/nodes.size(),yMedio/nodes.size(),cloud));
 
-            // Extraindo os Links
-            NodeList lList = doc.getElementsByTagName("link");
-            for (int temp = 0; temp < lList.getLength(); temp++) {
-                Node nNode = lList.item(temp);
+            // Adicionar o nó da Nuvem no centro geográfico 
+            if (!nodes.isEmpty()) {
+                nodes.add(new FogNode("0", xMedio / nodes.size(), yMedio / nodes.size(), cloud));
+            }
+
+            // --- 2. EXTRAÇÃO DOS LINKS (No GraphML usa-se a tag <edge>) ---
+            NodeList eList = doc.getElementsByTagName("edge");
+            for (int temp = 0; temp < eList.getLength(); temp++) {
+                Node nNode = eList.item(temp);
                 if (nNode.getNodeType() == Node.ELEMENT_NODE) {
                     Element eElement = (Element) nNode;
-                    
-                    NodeList preInstalled = eElement.getElementsByTagName("preInstalledModule");
-                    if (preInstalled.getLength() == 0) {
-                        continue; 
-                    }
 
-                    String sourceRaw = eElement.getElementsByTagName("source").item(0).getTextContent();
-                    String targetRaw = eElement.getElementsByTagName("target").item(0).getTextContent();
+                    // Origem e destino estão nos atributos da tag edge
+                    String sourceRaw = eElement.getAttribute("source");
+                    String targetRaw = eElement.getAttribute("target");
 
                     int sourceInt = Integer.parseInt(sourceRaw.replaceAll("\\D+", ""));
                     int targetInt = Integer.parseInt(targetRaw.replaceAll("\\D+", ""));
                     
-                    Element preInstElement = (Element) preInstalled.item(0);
-                    double capacity = Double.parseDouble(preInstElement.getElementsByTagName("capacity").item(0).getTextContent());
+                    double capacity = 1000.0; // Valor padrão de segurança para Fiber
+
+                    // Verifica o tipo de link lendo a key d34
+                    NodeList dataTags = eElement.getElementsByTagName("data");
+                    for (int j = 0; j < dataTags.getLength(); j++) {
+                        Element dataElem = (Element) dataTags.item(j);
+                        if (dataElem.getAttribute("key").equals("d34")) {
+                            String tipoLink = dataElem.getTextContent();
+                            if (tipoLink.equalsIgnoreCase("Optical")) {
+                                capacity = 4000.0;
+                            } else {
+                                capacity = 1000.0;
+                            }
+                        }
+                    }
                     
-                    links.add(new FogLink(sourceInt, targetInt, capacity));
+                    links.add(new FogLink(sourceInt + 1 , targetInt+1, capacity));
                 }
             }
 
         } catch (Exception e) {
-            System.err.println("Erro ao ler o arquivo XML: " + e.getMessage());
+            System.err.println("Erro ao ler o arquivo XML da rede Oxford: " + e.getMessage());
             e.printStackTrace();
         }
     }

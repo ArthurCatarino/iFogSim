@@ -14,20 +14,21 @@ import org.fog.entities.Actuator;
 import org.fog.entities.FogBroker;
 import org.fog.entities.FogDevice;
 import org.fog.entities.Sensor;
-import org.fog.entities.SensorLessLatency;
-import org.fog.entities.SensorLessSlack;
+import org.fog.entities.SensorHybrid;
+import org.fog.entities.FogDeviceWQHybrid;
 import org.fog.placement.Controller;
 import org.fog.placement.ModuleMapping;
 import org.fog.placement.ModulePlacementMapping;
 import org.fog.test.perfeval.testes.CriaDispositivos;
 import org.fog.test.perfeval.testes.ExtraiTopologia.FogLink;
 import org.fog.test.perfeval.testes.ExtraiTopologia.FogNode;
+import org.fog.test.perfeval.testes.cluster.Monitoramento;
 import org.fog.entities.dataEstructures.NetworkMatrix;
-import org.fog.entities.FogDeviceWQLessLatency;
+
 
 public class Simulacao {
-  private static Random rand = new Random();
-  private static final int numeroSensores = 100;
+  private static Random rand = new Random(81);
+  private static int numeroSensores = 50;
   private static FogBroker broker;
   private static CriaDispositivos deviceFactory;
   private static List<Sensor> sensores = new ArrayList<>();
@@ -35,7 +36,7 @@ public class Simulacao {
   private static List<Actuator> actuators = new ArrayList<>();
   private static final String appId = "Simulacao";
   private static final double bandaSensores = TipoSensor.mediaBanda();
-  private static final double porcentagemConectadaANuvem = 0.20;
+  private static double porcentagemConectadaANuvem = 0.20;
 
   private static void distribuirSensores(List<FogNode> nos) {
     int nFogs = nos.size(); 
@@ -67,7 +68,7 @@ public static double gerarPosicaoAoRedorDoFog(double n) {
 
 private static void criaSensorNoFog(FogNode pai, int idSensor) {
     TipoSensor tipoSorteado = TipoSensor.sortear();
-    SensorLessLatency sensor = deviceFactory.createSensorLessLatency(String.valueOf(idSensor),"TUPLA",tipoSorteado.getFrequenciaMs(),pai.device.getName(),2.0);
+    SensorHybrid sensor = deviceFactory.createSensorHybrid(String.valueOf(idSensor),"TUPLA",tipoSorteado.getFrequenciaMs(),pai.device.getName(),2.0);
     double sensorPosX = gerarPosicaoAoRedorDoFog(pai.x);
     double sensorPosY = gerarPosicaoAoRedorDoFog(pai.y);
     double distanciaEucli = Math.sqrt(Math.pow((pai.x-sensorPosX), 2) + Math.pow(pai.y-sensorPosY,2));
@@ -75,25 +76,28 @@ private static void criaSensorNoFog(FogNode pai, int idSensor) {
     //System.out.println("Sensor S_" + idSensor + " -> Conectado ao Fog: " + pai.getName());
 }
 
-  private static void criaTopologia(List<FogNode> nos, List<FogLink> links) {
-    FogNode nuvem = nos.remove(nos.size() - 1);
+  private static List<FogLink> criaTopologia(List<FogNode> nos, List<FogLink> links) {
+    List<FogLink> novosLinks = new ArrayList<>();
+    FogNode nuvem = nos.remove(nos.size()-1);
     for(FogLink link: links){ //Cria os links entre os fogs
-      FogDeviceWQLessLatency d1 = nos.get(link.source -1 ).device;
-      FogDeviceWQLessLatency d2 = nos.get(link.target - 1).device;
+      FogDeviceWQHybrid d1 = nos.get(link.source - 1).device;
+      FogDeviceWQHybrid d2 = nos.get(link.target - 1).device;
 
       d1.addNeighbor(d2);
       d2.addNeighbor(d1);
       
-      double dist = nos.get(link.source-1).distanciaEuclidiana(nos.get(link.target-1));
+      double dist = nos.get(link.source - 1).distanciaEuclidiana(nos.get(link.target -1 ));
 
       NetworkMatrix.addLatency(d1.getId(), d2.getId(), dist, link.capacity);
       NetworkMatrix.addLatency(d2.getId(), d1.getId(), dist, link.capacity);
-
-      // System.out.println("Link P2P: " + d1.getName() + " <--> " + d2.getName());
+      novosLinks.add(new FogLink(d1.getId(),d2.getId(),link.capacity));
+      //System.out.println("Link P2P: " + d1.getName() + " <--> " + d2.getName());
     }
     distribuirSensores(nos); //Gera e atribui os sensores
 
-    conectarNosProximosNuvem(nos,links,nuvem); //Conecta os nos a nuvem
+    conectarNosProximosNuvem(nos,links,nuvem,novosLinks); //Conecta os nos a nuvem
+
+    return novosLinks;
   }
   
   private static ModuleMapping criaMapeamento() {
@@ -105,6 +109,12 @@ private static void criaSensorNoFog(FogNode pai, int idSensor) {
   } 
   
   public static void main(String[] args) {
+
+    if (args.length >= 2) {
+        numeroSensores = Integer.parseInt(args[0]);
+        porcentagemConectadaANuvem = Double.parseDouble(args[1]);
+    }
+
     try {
       
       Log.disable();
@@ -112,11 +122,12 @@ private static void criaSensorNoFog(FogNode pai, int idSensor) {
       broker = new FogBroker("broker");
       deviceFactory = new CriaDispositivos(broker.getId(), appId);
       
-      ExtraiTopologia topologia = new ExtraiTopologia();
-      topologia.carregarTopologiaXML("src\\org\\fog\\test\\perfeval\\testes\\topologias\\atlanta.xml",deviceFactory);
+      ExtraiTopologia topologia = new ExtraiTopologia(rand);
+      topologia.carregarTopologiaXML("src\\org\\fog\\test\\perfeval\\testes\\topologias\\Oxford.graphml.xml",deviceFactory);
       List<FogNode> nosTopologia = topologia.getNodes();
       List<FogLink> linksTopologia = topologia.getLinks();
-      criaTopologia(nosTopologia,linksTopologia);
+      linksTopologia = criaTopologia(nosTopologia,linksTopologia);
+      Monitoramento.inicializaMapDoUsoDeBanda(linksTopologia);
 
       sensores = deviceFactory.getSensors();
       fogs = deviceFactory.getFogDevices();
@@ -124,9 +135,9 @@ private static void criaSensorNoFog(FogNode pai, int idSensor) {
       LogicaSimulacao logica = new LogicaSimulacao(appId,broker.getId());
       Application app = logica.criaApp();
       ModuleMapping mapping = criaMapeamento();
-      Controller controller = new Controller("controller", fogs, sensores, actuators);
+      Controller controller = new Controller("controller", fogs, sensores, actuators,numeroSensores,porcentagemConectadaANuvem);
       controller.submitApplication(app,new ModulePlacementMapping(fogs, app, mapping));
-      System.out.println("\nTopologia montada. Iniciando simulação...");
+      System.out.println("\nTopologia NewYork montada. Iniciando simulação FogDeviceWithQueueLessSlack (" + numeroSensores + " sensores e "+ porcentagemConectadaANuvem + "% conectado a nuvem)");
       CloudSim.startSimulation();
       CloudSim.stopSimulation();
 
@@ -135,8 +146,7 @@ private static void criaSensorNoFog(FogNode pai, int idSensor) {
     }
   }
 
-
-private static void conectarNosProximosNuvem(List<FogNode> nos,List<FogLink> links, FogNode nuvem) {
+private static void conectarNosProximosNuvem(List<FogNode> nos,List<FogLink> links, FogNode nuvem, List<FogLink> novosLinks) {
     List<NodeDistance> distancias = new ArrayList<>();
     
     for (FogNode fog : nos) {
@@ -155,6 +165,7 @@ private static void conectarNosProximosNuvem(List<FogNode> nos,List<FogLink> lin
         FogNode selecionado = distancias.get(i).node;  
         selecionado.device.addPais(nuvem.device);
         NetworkMatrix.addLatency(selecionado.device.getId(), nuvem.device.getId(), distancias.get(i).distance,bandaMedia);
+        novosLinks.add(new FogLink(selecionado.device.getId(), nuvem.device.getId(),bandaMedia));
         //System.out.println("Nó " + selecionado.id + " conectado à Nuvem (Top " + porcentagemConectadaANuvem + "%)");
     }
 }

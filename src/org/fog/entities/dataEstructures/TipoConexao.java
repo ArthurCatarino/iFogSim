@@ -9,7 +9,7 @@ public enum TipoConexao {
     RAPIDO(1500.0); 
 
     private final double banda;
-    private static final Random RANDOM = new Random();
+    private static final Random RANDOM = new Random(18);
 
     TipoConexao(double banda) {
         this.banda = banda;

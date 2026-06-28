@@ -25,7 +25,7 @@ public enum TiposDispositivos {
         this.ratePerMips = ratePerMips;
         this.busyPower = busyPower;
         this.idlePower = idlePower;
-        this.queueSize = mips;
+        this.queueSize = 2*mips;
     }
 
 

@@ -34,8 +34,10 @@ public class Controller extends SimEntity{
 	private Map<String, Integer> appLaunchDelays;
 
 	private Map<String, ModulePlacement> appModulePlacementPolicy;
+	private int numeroSensores;
+	private double porcentagem;
 	
-	public Controller(String name, List<FogDevice> fogDevices, List<Sensor> sensors, List<Actuator> actuators) {
+	public Controller(String name, List<FogDevice> fogDevices, List<Sensor> sensors, List<Actuator> actuators,int numeroSensores,double porcentagem) {
 		super(name);
 		this.applications = new HashMap<String, Application>();
 		setAppLaunchDelays(new HashMap<String, Integer>());
@@ -47,6 +49,8 @@ public class Controller extends SimEntity{
 		setActuators(actuators);
 		setSensors(sensors);
 		connectWithLatencies();
+		this.numeroSensores = numeroSensores;
+		this.porcentagem = porcentagem;
 	}
 
 	private FogDevice getFogDeviceById(int id){
@@ -104,7 +108,7 @@ public class Controller extends SimEntity{
 			printPowerDetails();
 			printCostDetails();
 			printNetworkUsageDetails();
-			AnalisadorResultados.salvarResultados(fogDevices,"Relatorio");
+			AnalisadorResultados.salvarResultados(fogDevices,"RelatorioIfogSim",numeroSensores,porcentagem);
 			System.exit(0);
 			break;
 			
